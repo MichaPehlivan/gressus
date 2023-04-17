@@ -951,6 +951,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "gressus"
+version = "0.1.0"
+dependencies = [
+ "actix-files",
+ "actix-web",
+ "cfg-if",
+ "console_error_panic_hook",
+ "console_log",
+ "leptos",
+ "leptos_actix",
+ "leptos_meta",
+ "leptos_router",
+ "log",
+ "simple_logger",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1413,24 +1431,6 @@ dependencies = [
  "serde",
  "server_fn",
  "thiserror",
-]
-
-[[package]]
-name = "leptos_start"
-version = "0.1.0"
-dependencies = [
- "actix-files",
- "actix-web",
- "cfg-if",
- "console_error_panic_hook",
- "console_log",
- "leptos",
- "leptos_actix",
- "leptos_meta",
- "leptos_router",
- "log",
- "simple_logger",
- "wasm-bindgen",
 ]
 
 [[package]]
