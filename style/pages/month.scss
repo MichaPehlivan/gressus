@@ -1,0 +1,36 @@
+@import "../colors";
+
+.month-view {
+	width: 100%;
+	height: 100%;
+
+	display: grid;
+	grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+	grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+
+	& > .month-day {
+		display: flex;
+		flex-direction: column;
+
+		justify-content: start;
+
+		border: 1px solid $color-bg-3;
+
+		padding: 5px;
+
+		& > .month-day-datum {
+			height: min-content;
+			width: 100%;
+
+			position: relative;
+			top: 0px;
+
+			margin: 0px;
+			margin-top: 0px;
+			margin-bottom: 3px;
+
+			border-bottom: 1px dashed $color-bg-4;
+			border-radius: 5px;
+		}
+	}
+}
