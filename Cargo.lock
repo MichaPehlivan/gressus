@@ -965,6 +965,7 @@ dependencies = [
  "leptos_router",
  "log",
  "simple_logger",
+ "time",
  "wasm-bindgen",
 ]
 
