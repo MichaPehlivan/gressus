@@ -4,6 +4,7 @@ async fn main() -> std::io::Result<()> {
     use std::env;
     use actix_files::Files;
     use actix_web::*;
+    use gressus::backend::database::db_requests::add_user;
     use leptos::*;
     use leptos_actix::{generate_route_list, LeptosRoutes};
     use surrealdb::Surreal;

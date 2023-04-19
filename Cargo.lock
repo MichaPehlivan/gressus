@@ -1363,6 +1363,7 @@ dependencies = [
  "actix-files",
  "actix-web",
  "cfg-if",
+ "chrono",
  "console_error_panic_hook",
  "console_log",
  "leptos",

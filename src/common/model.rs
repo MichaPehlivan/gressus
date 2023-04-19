@@ -3,32 +3,43 @@ use surrealdb::sql::{Datetime, Id};
 
 #[derive(Serialize, Deserialize)]
 pub struct User<'a> {
-    name: String,
-    hashed_password: &'a [u8],
-    joined_at: Datetime,
-    uuid: Id,
+    pub name: String,
+    pub hashed_password: &'a [u8],
+    pub joined_at: Datetime,
+    pub uuid: Id,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Task {
-    name: String,
-    description: String,
-    timespan: Timespan,
-    category: Id,
-    completed: bool,
-    uuid: Id,
+    pub name: String,
+    pub description: String,
+    pub timespan: Timespan,
+    pub category: Id,
+    pub completed: bool,
+    pub user: Id,
+    pub uuid: Id,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Event {
-    name: String,
-    timespan: Timespan,
-    category: Id,
-    uuid: Id,
+    pub name: String,
+    pub timespan: Timespan,
+    pub category: Id,
+    pub user: Id,
+    pub uuid: Id,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Timespan {
-    start: Datetime,
-    end: Datetime,
+    pub start: Datetime,
+    pub end: Datetime,
+}
+
+impl Timespan {
+    pub fn new(start: Datetime, end: Datetime) -> Self {
+        Timespan {
+            start,
+            end
+        }
+    }
 }
