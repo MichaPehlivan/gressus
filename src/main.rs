@@ -1,11 +1,28 @@
 #[cfg(feature = "ssr")]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    use std::env;
     use actix_files::Files;
     use actix_web::*;
     use leptos::*;
     use leptos_actix::{generate_route_list, LeptosRoutes};
+    use surrealdb::Surreal;
+    use surrealdb::engine::remote::ws::Ws;
+    use surrealdb::opt::auth::Root;
     use gressus::app::*;
+
+    // Connect to the database server
+    let db = Surreal::new::<Ws>("127.0.0.1:8000").await.unwrap();
+
+    // Signin to database
+    db.signin(Root {
+        username: &env::var("DATABASE_USER").unwrap(),
+        password: &env::var("DATABASE_PASS").unwrap(),
+    })
+    .await.unwrap();
+
+    // Select a specific namespace / database
+    db.use_ns("main").use_db("main").await.unwrap();
 
     let conf = get_configuration(None).await.unwrap();
     let addr = conf.leptos_options.site_addr;
