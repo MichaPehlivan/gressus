@@ -1,6 +1,7 @@
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+use time::*;
 
 use crate::frontend::*;
 use pages::month::*;
@@ -26,7 +27,7 @@ pub fn App(cx: Scope) -> impl IntoView {
 			<main>
 				<Overlay>
 					<Routes>
-						<Route path="" view=|cx| view! { cx, <MonthView/> }/>
+						<Route path="" view=|cx| view! { cx, <MonthView year=2023 month={Month::March}/> }/>
 					</Routes>
 				</Overlay>
 			</main>

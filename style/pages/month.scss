@@ -4,9 +4,17 @@
 	width: 100%;
 
 	display: grid;
-	grid-template-rows: 1fr repeat(7, 3fr);
+	grid-template-rows: min-content repeat(5, 3fr);
 	grid-template-columns: repeat(7, 3fr);
 	min-height: 0px;
+	height: 100%;
+
+	& > * {
+		border: 1px solid $color-bg-3;
+	}
+	& > p {
+		margin: 0px;
+	}
 }
 
 .month-day {
@@ -18,7 +26,6 @@
 	overflow-y: scroll;
 	scrollbar-width: none;
 
-	border: 1px solid $color-bg-3;
 }
 
 .month-day-datum {
