@@ -18,7 +18,7 @@ pub fn App(cx: Scope) -> impl IntoView {
         <Stylesheet id="leptos" href="/pkg/gressus.css"/>
 
         // sets the document title
-        <Title text="Welcome to Leptos"/>
+        <Title text="Gressus - agenda"/>
 
         // content for this welcome page
         <Router>
