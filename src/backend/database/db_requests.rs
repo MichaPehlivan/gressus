@@ -10,7 +10,8 @@ struct Record {
     id: Thing,
 }
 
-pub async fn add_user(db: Surreal<Client>, username: String, password: &[u8]) {
+//adds user to database
+pub async fn add_user(db: &Surreal<Client>, username: String, password: &[u8]) {
     let time = Utc::now();
     let id = Id::rand();
 
@@ -24,7 +25,8 @@ pub async fn add_user(db: Surreal<Client>, username: String, password: &[u8]) {
     let _created: Record = db.create("users").content(new_user).await.unwrap();
 }
 
-pub async fn add_task(db: Surreal<Client>, name: String, description: String, start: Datetime, end: Datetime, category: Id, user: Id) {
+//adds task to database
+pub async fn add_task(db: &Surreal<Client>, name: String, description: String, start: Datetime, end: Datetime, category: Id, user: Id) {
     let timespan = Timespan::new(start, end);
     let id = Id::rand();
 
@@ -41,7 +43,8 @@ pub async fn add_task(db: Surreal<Client>, name: String, description: String, st
     let _created: Record = db.create("tasks").content(new_task).await.unwrap();
 }
 
-pub async fn add_event(db: Surreal<Client>, name: String, start: Datetime, end: Datetime, category: Id, user: Id) {
+//adds event to database
+pub async fn add_event(db: &Surreal<Client>, name: String, start: Datetime, end: Datetime, category: Id, user: Id) {
     let timespan = Timespan::new(start, end);
     let id = Id::rand();
 
@@ -55,3 +58,4 @@ pub async fn add_event(db: Surreal<Client>, name: String, start: Datetime, end: 
 
     let _created: Record = db.create("events").content(new_event).await.unwrap();
 }
+

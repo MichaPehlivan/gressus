@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use surrealdb::sql::{Datetime, Id};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct User<'a> {
     pub name: String,
     pub hashed_password: &'a [u8],
