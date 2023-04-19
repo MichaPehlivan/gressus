@@ -4,29 +4,32 @@ use leptos_router::*;
 
 use crate::frontend::*;
 use pages::month::*;
+use overlay::*;
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
-    // Provides context that manages stylesheets, titles, meta tags, etc.
-    provide_meta_context(cx);
+	// Provides context that manages stylesheets, titles, meta tags, etc.
+	provide_meta_context(cx);
 
-    view! {
-        cx,
+	view! {
+		cx,
 
-        // injects a stylesheet into the document <head>
-        // id=leptos means cargo-leptos will hot-reload this stylesheet
-        <Stylesheet id="leptos" href="/pkg/gressus.css"/>
+		// injects a stylesheet into the document <head>
+		// id=leptos means cargo-leptos will hot-reload this stylesheet
+		<Stylesheet id="leptos" href="/pkg/gressus.css"/>
 
-        // sets the document title
-        <Title text="Gressus - agenda"/>
+		// sets the document title
+		<Title text="Gressus - agenda"/>
 
-        // content for this welcome page
-        <Router>
-            <main>
-                <Routes>
-                    <Route path="" view=|cx| view! { cx, <MonthView/> }/>
-                </Routes>
-            </main>
-        </Router>
-    }
+		// content for this welcome page
+		<Router>
+			<main>
+				<Overlay>
+					<Routes>
+						<Route path="" view=|cx| view! { cx, <MonthView/> }/>
+					</Routes>
+				</Overlay>
+			</main>
+		</Router>
+	}
 }

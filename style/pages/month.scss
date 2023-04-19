@@ -2,46 +2,39 @@
 
 .month-view {
 	width: 100%;
-	height: 100%;
 
 	display: grid;
-	grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
-	grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-
-	& > .month-day {
-		display: flex;
-		flex-direction: column;
-		justify-content: start;
-		padding: 3px;
-
-		max-height: 120px;
-		overflow-y:scroll;
-		scrollbar-width: none;
-
-		border: 1px solid $color-bg-3;
-
-
-		& > .month-day-datum {
-			height: min-content;
-			width: 100%;
-
-			position: relative;
-			top: 0px;
-
-			margin: 0px;
-			margin-top: 0px;
-			margin-bottom: 3px;
-
-			border-bottom: 1px dashed $color-bg-4;
-			border-radius: 5px;
-		}
-
-		
-	}
+	grid-template-rows: 1fr repeat(7, 3fr);
+	grid-template-columns: repeat(7, 3fr);
+	min-height: 0px;
 }
-.month-day-event {
-	height: min-content;
-	margin: 3px 5px;
-	border: 1px solid white;
+
+.month-day {
+	// Maybe scale current week when hovering?
+
+	display: flex;
+	flex-direction: column;
+
+	overflow-y: scroll;
+	scrollbar-width: none;
+
+	border: 1px solid $color-bg-3;
+}
+
+.month-day-datum {
+	position: relative;
+	margin: 0px;
+	margin-bottom: 3px;
+
+	border-bottom: 1px dashed $color-bg-4;
 	border-radius: 5px;
+}
+
+.month-day-event {
+	border-radius: 5px;
+	margin: 2px 0px;
+
+	text-overflow: clip;
+	white-space: nowrap;
+	overflow-x: hidden;
 }

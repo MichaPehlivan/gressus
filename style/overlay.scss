@@ -1,0 +1,37 @@
+@import "colors";
+
+.overlay-wrapper {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.navbar {
+	display: flex;
+	flex-direction: row;
+	justify-content: left;
+	background-color: #666666;
+	height: 50px;
+	width: 100%;
+
+	& #usericon {
+		height: 100%;
+	}
+
+}
+
+.navbar-left {
+	width: max-content;
+}
+
+.navbar-right {
+	display: flex;
+	flex-direction:row;
+	justify-content: end;
+	margin-left: auto;
+	height: 100%;
+	& > a {
+		height: 100%;
+	}
+}
