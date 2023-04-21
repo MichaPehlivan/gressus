@@ -3,49 +3,29 @@ use time::*;
 
 #[component]
 pub fn MonthView(cx: Scope, year: i32, month: Month) -> impl IntoView {
-	// let days_fill = (-6..=42)
-	// 	.into_iter()
-	// 	.map(|n| {
-	// 		view! {cx,
-	// 			<Day day=n/>
-	// 		}
-	// 	})
-	// 	.collect::<Vec<_>>();
-
 	// Get the Date of the first day of the month...
 	let first_of_month = Date::from_calendar_date(year, month, 1).unwrap();
 	// ...and the Date of the first day of the week...
-	let (_, week, _) = first_of_month.to_iso_week_date();
-	let first_of_week = Date::from_iso_week_date(year, week, Weekday::Monday).unwrap();
-	// ...such that we can now fill a vec with all the dates aligned to the weekdays until we reach the first of the month...
-	let mut dates = Vec::with_capacity(42);
+	let mut first_of_week = first_of_month;
+	//TODO: maybe create a setting for the first day of the week.
+	while first_of_week.weekday() != Weekday::Monday {
+		first_of_week = first_of_week.previous_day().unwrap();
+	}
+	// ...such that we can now fill a vec with 35 dates, starting from the first of the week.
 	let mut current_date = first_of_week;
-	while current_date != first_of_month {
-		dates.push(current_date);
-		current_date = current_date.next_day().unwrap();
+	let mut weeks = Vec::with_capacity(5);
+	for _ in 0..5 {
+		let mut days_in_week = Vec::with_capacity(7);
+		for _ in 0..7 {
+			days_in_week.push(view!{cx, <Day date=current_date/>});
+			current_date = current_date.next_day().unwrap();
+		}
+		weeks.push(view!{cx, <p class="weeknumber">{current_date.iso_week()}</p> {days_in_week}});
 	}
-	// ...and then fill it until we reach the next month...
-	while current_date.month() == first_of_month.month() {
-		dates.push(current_date);
-		current_date = current_date.next_day().unwrap();
-	}
-	// ...and then until we reach the start of next week.
-	let (year, week, _) = current_date.to_iso_week_date();
-	let last_of_week = Date::from_iso_week_date(year, week, Weekday::Sunday).unwrap().next_day().unwrap();
-	dbg!(current_date);
-	dbg!(last_of_week);
-	while current_date != last_of_week {
-		dates.push(current_date);
-		current_date = current_date.next_day().unwrap();
-	}
-
-	let days = dates
-		.iter()
-		.map(|d| view! {cx, <Day date=*d/>})
-		.collect::<Vec<_>>();
 
 	view! {cx,
 		<div class="month-view">
+			<p>"Week"</p>
 			<p>"Mon"</p>
 			<p>"Tue"</p>
 			<p>"Wed"</p>
@@ -53,7 +33,7 @@ pub fn MonthView(cx: Scope, year: i32, month: Month) -> impl IntoView {
 			<p>"Fri"</p>
 			<p>"Sat"</p>
 			<p>"Sun"</p>
-			{days}
+			{weeks}
 		</div>
 	}
 }

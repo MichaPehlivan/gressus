@@ -27,7 +27,7 @@ pub fn App(cx: Scope) -> impl IntoView {
 			<main>
 				<Overlay>
 					<Routes>
-						<Route path="" view=|cx| view! { cx, <MonthView year=2023 month={Month::March}/> }/>
+						<Route path="" view=|cx| view! { cx, <MonthView year=2022 month={Month::December}/> }/>
 					</Routes>
 				</Overlay>
 			</main>
