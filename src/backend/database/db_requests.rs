@@ -1,17 +1,10 @@
 use chrono::Utc;
-use serde::Deserialize;
-use surrealdb::{sql::{Datetime, Id, Thing}, Surreal, engine::remote::ws::Client};
+use surrealdb::{sql::{Datetime, Id}, Surreal, engine::remote::ws::Client};
 
 use crate::common::model::{User, Timespan, Task, Event};
 
-#[derive(Deserialize)]
-struct Record {
-    #[allow(dead_code)]
-    id: Thing,
-}
-
 //adds user to database
-pub async fn add_user(db: &Surreal<Client>, username: &String, password: &Vec<u8>) {
+pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) {
     if user_id_from_name(db, username).await != None {
         println!("user with that username already exists in the database");
         return;
@@ -31,7 +24,7 @@ pub async fn add_user(db: &Surreal<Client>, username: &String, password: &Vec<u8
 }
 
 //adds task to database
-pub async fn add_task(db: &Surreal<Client>, name: &String, description: &String, start: &Datetime, end: &Datetime, category: &Id, user: &Id) {
+pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Id, user: &Id) {
     let timespan = Timespan::new(start, end);
     let id = Id::rand();
 
@@ -49,7 +42,7 @@ pub async fn add_task(db: &Surreal<Client>, name: &String, description: &String,
 }
 
 //adds event to database
-pub async fn add_event(db: &Surreal<Client>, name: &String, description: &String, start: &Datetime, end: &Datetime, category: &Id, user: &Id) {
+pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Id, user: &Id) {
     let timespan = Timespan::new(start, end);
     let id = Id::rand();
 
@@ -63,6 +56,17 @@ pub async fn add_event(db: &Surreal<Client>, name: &String, description: &String
     };
 
     let _created: Event = db.create("events").content(new_event).await.unwrap();
+}
+
+//get user from Id
+pub async fn get_user(db: &Surreal<Client>, user_id: &Id) -> Option<User> {
+    let users: Vec<User> = db.select("users").await.unwrap();
+    for user in users {
+        if user.uuid == *user_id {
+            return Some(user);
+        }
+    }
+    return None
 }
 
 //retrieve events for a given user
@@ -80,7 +84,7 @@ pub async fn get_events(db: &Surreal<Client>, userid: &Id) -> Vec<Event> {
 }
 
 //retrieve user id from username
-pub async fn user_id_from_name(db: &Surreal<Client>, name: &String) -> Option<Id> {
+pub async fn user_id_from_name(db: &Surreal<Client>, name: &str) -> Option<Id> {
     let users: Vec<User> = db.select("users").await.unwrap();
     let users_filtered: Vec<User> = users.into_iter().filter(|x| x.name == *name).collect();
     match users_filtered.get(0) {
@@ -88,4 +92,8 @@ pub async fn user_id_from_name(db: &Surreal<Client>, name: &String) -> Option<Id
         None => None,
     }
 }
+
+pub async fn change_username(db: &Surreal<Client>, user: &Id, new_username: &str) {
+    db.query(format!("UPDATE users SET name = \"{}\" WHERE uuid = {{ \"String\": \"{}\" }}", new_username, user.to_string())).await.unwrap();
+} 
 
