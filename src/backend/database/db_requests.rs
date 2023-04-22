@@ -11,7 +11,7 @@ struct Record {
 }
 
 //adds user to database
-pub async fn add_user(db: &Surreal<Client>, username: String, password: &[u8]) {
+pub async fn add_user(db: &Surreal<Client>, username: String, password: Vec<u8>) {
     let time = Utc::now();
     let id = Id::rand();
 
@@ -22,7 +22,7 @@ pub async fn add_user(db: &Surreal<Client>, username: String, password: &[u8]) {
         uuid: id,
     };
 
-    let _created: Record = db.create("users").content(new_user).await.unwrap();
+    let _created: User = db.create("users").content(new_user).await.unwrap();
 }
 
 //adds task to database
@@ -40,7 +40,7 @@ pub async fn add_task(db: &Surreal<Client>, name: String, description: String, s
         uuid: id,
     };
 
-    let _created: Record = db.create("tasks").content(new_task).await.unwrap();
+    let _created: Task = db.create("tasks").content(new_task).await.unwrap();
 }
 
 //adds event to database
@@ -56,6 +56,15 @@ pub async fn add_event(db: &Surreal<Client>, name: String, start: Datetime, end:
         uuid: id,
     };
 
-    let _created: Record = db.create("events").content(new_event).await.unwrap();
+    let _created: Event = db.create("events").content(new_event).await.unwrap();
+}
+
+pub async fn user_id_from_name(db: &Surreal<Client>, name: String) -> Option<Id> {
+    let result: Vec<User> = db.select("users").await.unwrap();
+    let users: Vec<User> = result.into_iter().filter(|x| x.name == name).collect();
+    match users.get(0) {
+        Some(x) => Some(x.uuid.clone()),
+        None => None,
+    }
 }
 

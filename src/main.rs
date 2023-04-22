@@ -4,7 +4,7 @@ async fn main() -> std::io::Result<()> {
     use std::env;
     use actix_files::Files;
     use actix_web::*;
-    use gressus::backend::database::db_requests::{add_user};
+    use gressus::backend::database::db_requests::{add_user, user_id_from_name};
     use leptos::*;
     use leptos_actix::{generate_route_list, LeptosRoutes};
     use surrealdb::Surreal;
@@ -25,8 +25,13 @@ async fn main() -> std::io::Result<()> {
     // Select a specific namespace / database
     db.use_ns("main").use_db("main").await.unwrap();
 
-    add_user(&db, "micha".to_string(), "pass".as_bytes()).await;
-    add_user(&db, "heiko".to_string(), "pass".as_bytes()).await;
+    add_user(&db, "micha".to_string(), "pass".as_bytes().to_vec()).await;
+    add_user(&db, "heiko".to_string(), "pass".as_bytes().to_vec()).await;
+    let id = user_id_from_name(&db, "micha".to_string()).await;
+    match id {
+        Some(x) => println!("id = {}", x),
+        None => println!("no user found with that name")
+    }
 
     let conf = get_configuration(None).await.unwrap();
     let addr = conf.leptos_options.site_addr;
