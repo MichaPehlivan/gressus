@@ -17,15 +17,18 @@ pub fn MonthView(cx: Scope, year: i32, month: Month) -> impl IntoView {
 	for _ in 0..5 {
 		let mut days_in_week = Vec::with_capacity(7);
 		for _ in 0..7 {
-			days_in_week.push(view!{cx, <Day date=current_date/>});
+			days_in_week.push(view! {cx, <Day date=current_date/>});
 			current_date = current_date.next_day().unwrap();
 		}
-		weeks.push(view!{cx, <p class="weeknumber">{current_date.iso_week()}</p> {days_in_week}});
+		// weeks.push(view!{cx, <p class="empty"></p> {days_in_week}}); // Uncomment to disable week numbers. TODO: make config option.
+		weeks.push(view! {cx, <p class="weeknumber">{current_date.iso_week()}</p> {days_in_week}});
+		// Comment to disable week numbers.
 	}
 
 	view! {cx,
 		<div class="month-view">
-			<p>"Week"</p>
+			<p>"Week"</p> // Comment to disable week numbers.
+			// <p></p> // Uncomment to disable week numbers. TODO: make config option.
 			<p>"Mon"</p>
 			<p>"Tue"</p>
 			<p>"Wed"</p>
@@ -43,7 +46,7 @@ pub fn Day(cx: Scope, date: Date) -> impl IntoView {
 	let items_fill = (0..5)
 		.into_iter()
 		.map(
-			|n| view! {cx, <DayEvent description={ format!("Fill text {n} feafea!!")} color="#1E70F0".to_string()/> },
+			|n| view! {cx, <DayEvent description={ format!("TODO: {n}")} color="#1E70F0".to_string()/> },
 		)
 		.collect::<Vec<_>>();
 	view! {cx,

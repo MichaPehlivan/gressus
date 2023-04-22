@@ -13,10 +13,10 @@ pub fn Overlay(cx: Scope, children: Children) -> impl IntoView {
 
 #[component]
 pub fn Navbar(cx: Scope) -> impl IntoView {
-	view!{cx,
+	view! {cx,
 		<div class="navbar">
 			<div class="navbar-left">
-				<p>"Fill text! jkljakflejalkfjeaklf"</p>
+				<p>"TODO:"</p>
 			</div>
 			<div class="navbar-right">
 				<A href="/user">
@@ -24,5 +24,5 @@ pub fn Navbar(cx: Scope) -> impl IntoView {
 				</A>
 			</div>
 		</div>
-	}	
+	}
 }
