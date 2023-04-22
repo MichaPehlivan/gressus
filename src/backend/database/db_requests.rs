@@ -12,6 +12,11 @@ struct Record {
 
 //adds user to database
 pub async fn add_user(db: &Surreal<Client>, username: String, password: Vec<u8>) {
+    if user_id_from_name(db, username.clone()).await != None {
+        println!("user with that username already exists in the database");
+        return;
+    }
+
     let time = Utc::now();
     let id = Id::rand();
 
