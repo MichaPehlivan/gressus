@@ -11,8 +11,8 @@ struct Record {
 }
 
 //adds user to database
-pub async fn add_user(db: &Surreal<Client>, username: String, password: Vec<u8>) {
-    if user_id_from_name(db, username.clone()).await != None {
+pub async fn add_user(db: &Surreal<Client>, username: &String, password: &Vec<u8>) {
+    if user_id_from_name(db, username).await != None {
         println!("user with that username already exists in the database");
         return;
     }
@@ -21,8 +21,8 @@ pub async fn add_user(db: &Surreal<Client>, username: String, password: Vec<u8>)
     let id = Id::rand();
 
     let new_user = User {
-        name: username,
-        hashed_password: password,
+        name: username.to_string(),
+        hashed_password: password.to_vec(),
         joined_at: Datetime::from(time),
         uuid: id,
     };
@@ -31,17 +31,17 @@ pub async fn add_user(db: &Surreal<Client>, username: String, password: Vec<u8>)
 }
 
 //adds task to database
-pub async fn add_task(db: &Surreal<Client>, name: String, description: String, start: Datetime, end: Datetime, category: Id, user: Id) {
+pub async fn add_task(db: &Surreal<Client>, name: &String, description: &String, start: &Datetime, end: &Datetime, category: &Id, user: &Id) {
     let timespan = Timespan::new(start, end);
     let id = Id::rand();
 
     let new_task = Task {
-        name,
-        description,
+        name: name.to_string(),
+        description: description.to_string(),
         timespan,
-        category,
+        category: category.clone(),
         completed: false,
-        user,
+        user: user.clone(),
         uuid: id,
     };
 
@@ -49,25 +49,41 @@ pub async fn add_task(db: &Surreal<Client>, name: String, description: String, s
 }
 
 //adds event to database
-pub async fn add_event(db: &Surreal<Client>, name: String, start: Datetime, end: Datetime, category: Id, user: Id) {
+pub async fn add_event(db: &Surreal<Client>, name: &String, description: &String, start: &Datetime, end: &Datetime, category: &Id, user: &Id) {
     let timespan = Timespan::new(start, end);
     let id = Id::rand();
 
     let new_event = Event {
-        name,
+        name: name.to_string(),
+        description: description.to_string(),
         timespan,
-        category,
-        user,
+        category: category.clone(),
+        user: user.clone(),
         uuid: id,
     };
 
     let _created: Event = db.create("events").content(new_event).await.unwrap();
 }
 
-pub async fn user_id_from_name(db: &Surreal<Client>, name: String) -> Option<Id> {
-    let result: Vec<User> = db.select("users").await.unwrap();
-    let users: Vec<User> = result.into_iter().filter(|x| x.name == name).collect();
-    match users.get(0) {
+//retrieve events for a given user
+pub async fn get_tasks(db: &Surreal<Client>, userid: &Id) -> Vec<Task> {
+    let tasks: Vec<Task> = db.select("tasks").await.unwrap();
+    let tasks_filtered: Vec<Task> = tasks.into_iter().filter(|x| x.user == userid.clone()).collect();
+    tasks_filtered
+}
+
+//retrieve events for a given user
+pub async fn get_events(db: &Surreal<Client>, userid: &Id) -> Vec<Event> {
+    let events: Vec<Event> = db.select("events").await.unwrap();
+    let events_filtered: Vec<Event> = events.into_iter().filter(|x| x.user == userid.clone()).collect();
+    events_filtered
+}
+
+//retrieve user id from username
+pub async fn user_id_from_name(db: &Surreal<Client>, name: &String) -> Option<Id> {
+    let users: Vec<User> = db.select("users").await.unwrap();
+    let users_filtered: Vec<User> = users.into_iter().filter(|x| x.name == *name).collect();
+    match users_filtered.get(0) {
         Some(x) => Some(x.uuid.clone()),
         None => None,
     }

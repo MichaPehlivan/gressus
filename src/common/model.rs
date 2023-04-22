@@ -9,7 +9,7 @@ pub struct User {
     pub uuid: Id,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Task {
     pub name: String,
     pub description: String,
@@ -20,26 +20,27 @@ pub struct Task {
     pub uuid: Id,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Event {
     pub name: String,
+    pub description: String,
     pub timespan: Timespan,
     pub category: Id,
     pub user: Id,
     pub uuid: Id,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Timespan {
     pub start: Datetime,
     pub end: Datetime,
 }
 
 impl Timespan {
-    pub fn new(start: Datetime, end: Datetime) -> Self {
+    pub fn new(start: &Datetime, end: &Datetime) -> Self {
         Timespan {
-            start,
-            end
+            start: start.clone(),
+            end: end.clone()
         }
     }
 }
