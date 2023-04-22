@@ -1,6 +1,6 @@
 @import "../colors";
 
-.month-view {
+.monthview {
 	width: 100%;
 
 	display: grid;
@@ -17,7 +17,7 @@
 	}
 }
 
-.month-day {
+.monthview-day {
 	// TODO: maybe scale current week when hovering?
 
 	display: flex;
@@ -28,7 +28,7 @@
 
 }
 
-.month-day-datum {
+.monthview-day-datum {
 	position: relative;
 	margin: 0px;
 	margin-bottom: 3px;
@@ -37,9 +37,10 @@
 	border-radius: 5px;
 }
 
-.month-day-event {
+.monthview-day-event {
 	border-radius: 5px;
 	margin: 2px 0px;
+	padding-left:3px;
 
 	text-overflow: clip;
 	white-space: nowrap;

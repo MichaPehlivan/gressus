@@ -14,9 +14,9 @@ pub fn MonthView(cx: Scope, year: i32, month: Month) -> impl IntoView {
 	// ...such that we can now fill a vec with 35 dates, starting from the first of the week.
 	let mut current_date = first_of_week;
 	let mut weeks = Vec::with_capacity(5);
-	for _ in 0..5 {
+	for _rows in 0..6 {
 		let mut days_in_week = Vec::with_capacity(7);
-		for _ in 0..7 {
+		for _days_in_row in 0..7 {
 			days_in_week.push(view! {cx, <Day date=current_date/>});
 			current_date = current_date.next_day().unwrap();
 		}
@@ -26,7 +26,7 @@ pub fn MonthView(cx: Scope, year: i32, month: Month) -> impl IntoView {
 	}
 
 	view! {cx,
-		<div class="month-view">
+		<div class="monthview">
 			<p>"Week"</p> // Comment to disable week numbers.
 			// <p></p> // Uncomment to disable week numbers. TODO: make config option.
 			<p>"Mon"</p>
@@ -50,9 +50,9 @@ pub fn Day(cx: Scope, date: Date) -> impl IntoView {
 		)
 		.collect::<Vec<_>>();
 	view! {cx,
-		<div class="month-day">
-			<p class="month-day-datum">{date.day()}</p>
-			<div class="month-day-items-wrapper">
+		<div class="monthview-day">
+			<p class="monthview-day-datum">{date.day()}</p>
+			<div class="monthview-day-items-wrapper">
 				{items_fill}
 			</div>
 		</div>
@@ -62,6 +62,6 @@ pub fn Day(cx: Scope, date: Date) -> impl IntoView {
 #[component]
 pub fn DayEvent(cx: Scope, description: String, color: String) -> impl IntoView {
 	view! {cx,
-		<p class="month-day-event" style=format!("background-color: {color}")>{description}</p>
+		<p class="monthview-day-event" style=format!("background-color: {color}")>{description}</p>
 	}
 }

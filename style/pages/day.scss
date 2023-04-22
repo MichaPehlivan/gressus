@@ -1,0 +1,13 @@
+@import "../colors";
+
+.dayview {
+	display: grid;
+	grid-template-columns: 1fr;
+	min-height: 0;
+}
+
+.dayview-items {
+	margin: 0;
+	padding: 0;
+	background-color: blue;
+}
