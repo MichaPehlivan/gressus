@@ -1374,8 +1374,8 @@ dependencies = [
  "serde",
  "simple_logger",
  "surrealdb",
+ "time 0.3.20",
  "tokio",
- "time",
  "wasm-bindgen",
 ]
 

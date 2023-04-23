@@ -1,20 +1,20 @@
+use std::env;
+use actix_files::Files;
+use actix_web::*;
+use chrono::Utc;
+use gressus::backend::database::db_requests::{add_event, add_user, user_id_from_name, add_task, get_tasks, get_events, change_username, delete_user};
+use gressus::common::model::User;
+use leptos::*;
+use leptos_actix::{generate_route_list, LeptosRoutes};
+use surrealdb::Surreal;
+use surrealdb::engine::remote::ws::Ws;
+use surrealdb::opt::auth::Root;
+use gressus::app::*;
+use surrealdb::sql::{Datetime, Id};
+
 #[cfg(feature = "ssr")]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    use std::env;
-    use actix_files::Files;
-    use actix_web::*;
-    use chrono::Utc;
-    use gressus::backend::database::db_requests::{add_event, add_user, user_id_from_name, add_task, get_tasks, get_events, change_username, delete_user};
-    use gressus::common::model::User;
-    use leptos::*;
-    use leptos_actix::{generate_route_list, LeptosRoutes};
-    use surrealdb::Surreal;
-    use surrealdb::engine::remote::ws::Ws;
-    use surrealdb::opt::auth::Root;
-    use gressus::app::*;
-    use surrealdb::sql::{Datetime, Id};
-
     // Connect to the database server
     let db = Surreal::new::<Ws>("127.0.0.1:8000").await.unwrap();
 
