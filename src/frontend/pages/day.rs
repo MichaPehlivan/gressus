@@ -3,23 +3,30 @@ use time::*;
 
 #[component]
 pub fn DayView(cx: Scope, date: Date) -> impl IntoView {
-	let subdivide_by_minutes = 5;
+	let subdivide_by_minutes = 15;
 	let num_rows = (24 * 60) / subdivide_by_minutes;
 
-	let fill_items = (0..10)
-		.into_iter()
-		.map(|i| {
-			let start = i * 20 + 1;
-			let end = i * 20 + 2 + i*2;
-			view! {cx,
-				<p class="dayview-items" style="grid-row-start: {start}; grid-row-end: {end};">"TODO: {i}!"</p>
-			}
-		})
-		.collect::<Vec<_>>();
+	let mut fill_items = Vec::with_capacity(10);
+	let mut start = 0;
+	for i in 1..11 {
+		let end = start + i;
+		fill_items.push(view! {cx,
+			<p class="dayview-items" style="grid-row-start: {start}; grid-row-end: {end};">"TODO: {i}!"</p>
+		});
+		start += i + 1;
+	}
 
 	view! {cx,
 		<div class="dayview" style="grid-template-rows: repeat({num_rows}, 1fr);">
 			{fill_items}
 		</div>
+	}
+}
+
+#[component]
+pub fn DayItem(cx: Scope, start: Time) -> impl IntoView {
+	
+	view!{cx,
+		
 	}
 }
