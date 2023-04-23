@@ -1,0 +1,1 @@
+surreal.exe start --log debug --user $DATABASE_USER --pass $DATABASE_PASS memory

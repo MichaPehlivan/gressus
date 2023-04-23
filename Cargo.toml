@@ -27,6 +27,10 @@ leptos_router = { version = "0.2", default-features = false }
 log = "0.4"
 simple_logger = "4"
 wasm-bindgen = "0.2"
+surrealdb = "1.0.0-beta.9"
+serde = { version = "1.0.160", features = ["derive"] }
+tokio = { version = "1.27.0", features = ["macros", "rt"] }
+chrono = "0.4.24"
 time = { version = "0.3.20", features = ["formatting"] }
 
 [features]
