@@ -1,0 +1,48 @@
+@import "../colors";
+
+.monthview {
+	width: 100%;
+
+	display: grid;
+	grid-template-rows: min-content repeat(5, 3fr);
+	grid-template-columns: min-content repeat(7, 3fr);
+	min-height: 0px;
+	height: 100%;
+
+	& > * {
+		border: 1px solid $color-bg-3;
+	}
+	& > p {
+		margin: 0px;
+	}
+}
+
+.monthview-day {
+	// TODO: maybe scale current week when hovering?
+
+	display: flex;
+	flex-direction: column;
+
+	overflow-y: scroll;
+	scrollbar-width: none;
+
+}
+
+.monthview-day-datum {
+	position: relative;
+	margin: 0px;
+	margin-bottom: 3px;
+
+	border-bottom: 1px dashed $color-bg-4;
+	border-radius: 5px;
+}
+
+.monthview-day-event {
+	border-radius: 5px;
+	margin: 2px 0px;
+	padding-left:3px;
+
+	text-overflow: clip;
+	white-space: nowrap;
+	overflow-x: hidden;
+}
