@@ -93,7 +93,26 @@ pub async fn user_id_from_name(db: &Surreal<Client>, name: &str) -> Option<Id> {
     }
 }
 
+//change username
 pub async fn change_username(db: &Surreal<Client>, user: &Id, new_username: &str) {
-    db.query(format!("UPDATE users SET name = \"{}\" WHERE uuid = {{ \"String\": \"{}\" }}", new_username, user.to_string())).await.unwrap();
-} 
+    let query = format!("UPDATE users SET name = \"{}\" WHERE uuid = {{ \"String\": \"{}\" }}", new_username, user.to_string());
+    db.query(query).await.unwrap();
+}
 
+//delete user
+pub async fn delete_user(db: &Surreal<Client>, user: &Id) {
+    let query = format!("DELETE FROM users WHERE uuid = {{ \"String\": \"{}\" }}", user.to_string());
+    db.query(query).await.unwrap();
+}
+
+//delete task
+pub async fn delete_task(db: &Surreal<Client>, task: &Id) {
+    let query = format!("DELETE FROM tasks WHERE uuid = {{ \"String\": \"{}\" }}", task.to_string());
+    db.query(query).await.unwrap();
+}
+
+//delete event
+pub async fn delete_event(db: &Surreal<Client>, event: &Id) {
+    let query = format!("DELETE FROM events WHERE uuid = {{ \"String\": \"{}\" }}", event.to_string());
+    db.query(query).await.unwrap();
+}

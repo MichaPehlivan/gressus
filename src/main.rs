@@ -5,7 +5,7 @@ async fn main() -> std::io::Result<()> {
     use actix_files::Files;
     use actix_web::*;
     use chrono::Utc;
-    use gressus::backend::database::db_requests::{add_event, add_user, user_id_from_name, add_task, get_tasks, get_events, change_username};
+    use gressus::backend::database::db_requests::{add_event, add_user, user_id_from_name, add_task, get_tasks, get_events, change_username, delete_user};
     use gressus::common::model::User;
     use leptos::*;
     use leptos_actix::{generate_route_list, LeptosRoutes};
@@ -51,6 +51,7 @@ async fn main() -> std::io::Result<()> {
     println!("heiko's tasks: {:#?}", heiko_tasks);
     println!("heiko's events: {:#?}", heiko_events);
     change_username(&db, &micha_id, "michah").await;
+    delete_user(&db, &heiko_id).await;
     let users: Vec<User> = db.select("users").await.unwrap();
     println!("users: {:#?}", users);
 
