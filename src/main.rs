@@ -10,7 +10,7 @@ use surrealdb::Surreal;
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::opt::auth::Root;
 use gressus::app::*;
-use surrealdb::sql::{Datetime, Id};
+use surrealdb::sql::{Datetime, Uuid};
 
 #[cfg(feature = "ssr")]
 #[actix_web::main]
@@ -34,14 +34,14 @@ async fn main() -> std::io::Result<()> {
     let heiko_id = user_id_from_name(&db, "heiko").await.unwrap();
     let start = &Datetime::from(Utc::now());
     let end = &Datetime::from(Utc::now());
-    add_task(&db, "task1", "test1", start, end, &Id::rand(), &micha_id).await;
-    add_task(&db, "task2", "test2", start, end, &Id::rand(), &micha_id).await;
-    add_task(&db, "task3", "test3", start, end, &Id::rand(), &heiko_id).await;
-    add_task(&db, "task4", "test4", start, end, &Id::rand(), &heiko_id).await;
-    add_event(&db, "event1", "test5", start, end, &Id::rand(), &micha_id).await;
-    add_event(&db, "event2", "test6", start, end, &Id::rand(), &micha_id).await;
-    add_event(&db, "event3", "test7", start, end, &Id::rand(), &heiko_id).await;
-    add_event(&db, "event4", "test8", start, end, &Id::rand(), &heiko_id).await;
+    add_task(&db, "task1", "test1", start, end, &Uuid::new(), &micha_id).await;
+    add_task(&db, "task2", "test2", start, end, &Uuid::new(), &micha_id).await;
+    add_task(&db, "task3", "test3", start, end, &Uuid::new(), &heiko_id).await;
+    add_task(&db, "task4", "test4", start, end, &Uuid::new(), &heiko_id).await;
+    add_event(&db, "event1", "test5", start, end, &Uuid::new(), &micha_id).await;
+    add_event(&db, "event2", "test6", start, end, &Uuid::new(), &micha_id).await;
+    add_event(&db, "event3", "test7", start, end, &Uuid::new(), &heiko_id).await;
+    add_event(&db, "event4", "test8", start, end, &Uuid::new(), &heiko_id).await;
     let micha_tasks = get_tasks(&db, &micha_id).await;
     let heiko_tasks = get_tasks(&db, &heiko_id).await;
     let micha_events = get_events(&db, &micha_id).await;

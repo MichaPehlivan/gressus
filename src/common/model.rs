@@ -1,12 +1,12 @@
 use serde::{Serialize, Deserialize};
-use surrealdb::sql::{Datetime, Id};
+use surrealdb::sql::{Datetime, Uuid};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     pub name: String,
     pub hashed_password: Vec<u8>,
     pub joined_at: Datetime,
-    pub uuid: Id,
+    pub uuid: Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -14,10 +14,10 @@ pub struct Task {
     pub name: String,
     pub description: String,
     pub timespan: Timespan,
-    pub category: Id,
+    pub category: Uuid,
     pub completed: bool,
-    pub user: Id,
-    pub uuid: Id,
+    pub user: Uuid,
+    pub uuid: Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,9 +25,9 @@ pub struct Event {
     pub name: String,
     pub description: String,
     pub timespan: Timespan,
-    pub category: Id,
-    pub user: Id,
-    pub uuid: Id,
+    pub category: Uuid,
+    pub user: Uuid,
+    pub uuid: Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
