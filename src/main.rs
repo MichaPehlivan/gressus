@@ -16,6 +16,8 @@ use surrealdb::sql::{Datetime, Uuid};
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Connect to the database server
+
+    use gressus::backend::database::db_requests::add_category;
     let db = Surreal::new::<Ws>("127.0.0.1:8000").await.unwrap();
 
     // Signin to database
@@ -52,6 +54,8 @@ async fn main() -> std::io::Result<()> {
     println!("heiko's events: {:#?}", heiko_events);
     change_username(&db, &micha_id, "michah").await;
     delete_user(&db, &heiko_id).await;
+    add_category(&db, &micha_id, &Uuid::new()).await;
+    add_category(&db, &micha_id, &Uuid::new()).await;
     let users: Vec<User> = db.select("users").await.unwrap();
     println!("users: {:#?}", users);
 

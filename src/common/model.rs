@@ -6,6 +6,7 @@ pub struct User {
     pub name: String,
     pub hashed_password: Vec<u8>,
     pub joined_at: Datetime,
+    pub categories: Vec<Uuid>,
     pub uuid: Uuid,
 }
 
