@@ -18,10 +18,10 @@ pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) 
         hashed_password: password.to_vec(),
         joined_at: Datetime::from(time),
         categories: Vec::new(),
-        uuid: id,
+        uuid: id.clone(),
     };
 
-    let _created: User = db.create("users").content(new_user).await.unwrap();
+    let _created: User = db.create(("users", id.to_raw())).content(new_user).await.unwrap();
 }
 
 ///adds task to database
@@ -36,10 +36,10 @@ pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start
         category: category.clone(),
         completed: false,
         user: user.clone(),
-        uuid: id,
+        uuid: id.clone(),
     };
 
-    let _created: Task = db.create("tasks").content(new_task).await.unwrap();
+    let _created: Task = db.create(("tasks", id.to_raw())).content(new_task).await.unwrap();
 }
 
 ///adds event to database
@@ -53,21 +53,16 @@ pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, star
         timespan,
         category: category.clone(),
         user: user.clone(),
-        uuid: id,
+        uuid: id.clone(),
     };
 
-    let _created: Event = db.create("events").content(new_event).await.unwrap();
+    let _created: Event = db.create(("events", id.to_raw())).content(new_event).await.unwrap();
 }
 
 ///get user from Uuid
 pub async fn get_user(db: &Surreal<Client>, user_id: &Uuid) -> Option<User> {
-    let users: Vec<User> = db.select("users").await.unwrap();
-    for user in users {
-        if user.uuid == *user_id {
-            return Some(user);
-        }
-    }
-    return None
+    let user: Option<User> = db.select(("users", user_id.to_raw())).await.unwrap();
+    user
 }
 
 ///retrieve events for a given user
@@ -102,7 +97,7 @@ pub async fn user_id_from_name(db: &Surreal<Client>, name: &str) -> Option<Uuid>
 
 ///change username
 pub async fn change_username(db: &Surreal<Client>, user: &Uuid, new_username: &str) {
-    let query = format!("UPDATE users SET name = \"{}\" WHERE uuid = {}", new_username, user.to_string());
+    let query = format!("UPDATE users:`{}` SET name = \"{}\"", user.to_raw(), new_username);
     db.query(query).await.unwrap();
 }
 
@@ -111,29 +106,29 @@ pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid
     let mut categories = get_categories(db, user).await;
     categories.push(new_category.clone());
     let categories_str = uuid_vec_to_string(categories);
-    let query = format!("UPDATE users SET categories = {} WHERE uuid = {}", categories_str, user.to_string());
+    let query = format!("UPDATE users:`{}` SET categories = {}", user.to_raw(), categories_str);
     db.query(query).await.unwrap();
 }
 
 ///deletes a user
 pub async fn delete_user(db: &Surreal<Client>, user: &Uuid) {
-    let query = format!("DELETE FROM users WHERE uuid = {}", user.to_string());
+    let query = format!("DELETE users:`{}`", user.to_raw());
     db.query(query).await.unwrap();
 }
 
 ///deletes a task
 pub async fn delete_task(db: &Surreal<Client>, task: &Uuid) {
-    let query = format!("DELETE FROM tasks WHERE uuid = {}", task.to_string());
+    let query = format!("DELETE tasks:`{}`", task.to_raw());
     db.query(query).await.unwrap();
 }
 
 ///deletes an event
 pub async fn delete_event(db: &Surreal<Client>, event: &Uuid) {
-    let query = format!("DELETE FROM events WHERE uuid = {}", event.to_string());
+    let query = format!("DELETE events:`{}`", event.to_raw());
     db.query(query).await.unwrap();
 }
 
-//
+/// convert vec of uuid's to string for queries
 fn uuid_vec_to_string(vec: Vec<Uuid>) -> String {
     let mut result = String::from("[");
     for x in vec {
