@@ -1,7 +1,7 @@
 use chrono::Utc;
 use surrealdb::{sql::{Datetime, Uuid}, Surreal, engine::remote::ws::Client};
 
-use crate::common::model::{User, Timespan, Task, Event};
+use crate::common::model::{User, Timespan, Task, Event, Category};
 
 ///adds user to database
 pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) -> User {
@@ -62,6 +62,28 @@ pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, star
     created
 }
 
+///adds category to database
+pub async fn add_category(db: &Surreal<Client>, name: &str, color: u32, user: &Uuid) -> Category {
+    let id = Uuid::new();
+
+    let new_category = Category {
+        name: name.to_string(),
+        color,
+        user: user.clone(),
+        uuid: id.clone(),
+    };
+
+    let created: Category = db.create(("categories", id.to_raw())).content(new_category).await.unwrap();
+
+    let mut categories = get_categories(db, user).await;
+    categories.push(id.clone());
+    let mut new_user = get_user(db, user).await.unwrap();
+    new_user.categories = categories;
+    let _updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
+
+    created
+}
+
 ///get user from Uuid
 pub async fn get_user(db: &Surreal<Client>, user_id: &Uuid) -> Option<User> {
     let user: Option<User> = db.select(("users", user_id.to_raw())).await.unwrap();
@@ -78,6 +100,12 @@ pub async fn get_task(db: &Surreal<Client>, task_id: &Uuid) -> Option<Task> {
 pub async fn get_event(db: &Surreal<Client>, event_id: &Uuid) -> Option<Event> {
     let event: Option<Event> = db.select(("events", event_id.to_raw())).await.unwrap();
     event
+}
+
+///get category from Uuid
+pub async fn get_category(db: &Surreal<Client>, category_id: &Uuid) -> Option<Category> {
+    let category: Option<Category> = db.select(("categories", category_id.to_raw())).await.unwrap();
+    category
 }
 
 ///retrieve events for a given user
@@ -122,16 +150,6 @@ pub async fn change_username(db: &Surreal<Client>, user: &Uuid, new_username: &s
 pub async fn change_password(db: &Surreal<Client>, user: &Uuid, new_password: &Vec<u8>) -> Option<User> {
     let mut new_user = get_user(db, user).await.unwrap();
     new_user.hashed_password = new_password.to_vec();
-    let updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
-    updated
-}
-
-///add category to user
-pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid) -> Option<User> {
-    let mut categories = get_categories(db, user).await;
-    categories.push(new_category.clone());
-    let mut new_user = get_user(db, user).await.unwrap();
-    new_user.categories = categories;
     let updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
     updated
 }
@@ -208,6 +226,22 @@ pub async fn event_change_category(db: &Surreal<Client>, event: &Uuid, new_categ
     updated
 }
 
+///change category name
+pub async fn category_edit_name(db: &Surreal<Client>, category: &Uuid, new_name: &str) -> Option<Category> {
+    let mut new_category = get_category(db, category).await.unwrap();
+    new_category.name = new_name.to_string();
+    let updated: Option<Category> = db.update(("categories", category.to_raw())).await.unwrap();
+    updated
+}
+
+///change category color
+pub async fn category_change_color(db: &Surreal<Client>, category: &Uuid, new_color: u32) -> Option<Category> {
+    let mut new_category = get_category(db, category).await.unwrap();
+    new_category.color = new_color;
+    let updated: Option<Category> = db.update(("categories", category.to_raw())).await.unwrap();
+    updated
+}
+
 ///deletes a user
 pub async fn delete_user(db: &Surreal<Client>, user: &Uuid) -> Option<User> {
     let deleted: Option<User> = db.delete(("users", user.to_raw())).await.unwrap();
@@ -223,5 +257,11 @@ pub async fn delete_task(db: &Surreal<Client>, task: &Uuid) -> Option<Task> {
 ///deletes an event
 pub async fn delete_event(db: &Surreal<Client>, event: &Uuid) -> Option<Event> {
     let deleted: Option<Event> = db.delete(("events", event.to_raw())).await.unwrap();
+    deleted
+}
+
+///deletes a category
+pub async fn delete_category(db: Surreal<Client>, category: &Uuid) -> Option<Category> {
+    let deleted: Option<Category> = db.delete(("categories", category.to_raw())).await.unwrap();
     deleted
 }

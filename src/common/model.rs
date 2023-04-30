@@ -31,6 +31,14 @@ pub struct Event {
     pub uuid: Uuid,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Category {
+    pub name: String,
+    pub color: u32,
+    pub user: Uuid,
+    pub uuid: Uuid,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Timespan {
     pub start: Datetime,

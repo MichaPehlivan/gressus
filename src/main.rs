@@ -17,7 +17,7 @@ use surrealdb::sql::{Datetime, Uuid};
 async fn main() -> std::io::Result<()> {
     // Connect to the database server
 
-    use gressus::backend::database::db_requests::{add_category, change_password, task_edit_name, task_set_completion, task_edit_desc, event_edit_name, event_edit_desc};
+    use gressus::backend::database::db_requests::{add_category, change_password, task_edit_name, task_set_completion, task_edit_desc, event_edit_name, event_edit_desc, get_categories, get_category};
     let db = Surreal::new::<Ws>("127.0.0.1:8000").await.unwrap();
 
     // Signin to database
@@ -64,8 +64,11 @@ async fn main() -> std::io::Result<()> {
     change_username(&db, &micha_id, "michah").await;
     change_password(&db, &micha_id, &"new_pass".as_bytes().to_vec()).await;
     delete_user(&db, &heiko_id).await;
-    add_category(&db, &micha_id, &Uuid::new()).await;
-    add_category(&db, &micha_id, &Uuid::new()).await;
+    add_category(&db, "category1", 20, &micha_id).await;
+    add_category(&db, "category2", 56, &micha_id).await;
+    let categories = get_categories(&db, &micha_id).await;
+    let micha_categories = vec![get_category(&db, categories.get(0).unwrap()).await.unwrap(), get_category(&db, categories.get(1).unwrap()).await.unwrap()];
+    println!("micha's categories: {:#?}", micha_categories);
     let users: Vec<User> = db.select("users").await.unwrap();
     println!("users: {:#?}", users);
 
