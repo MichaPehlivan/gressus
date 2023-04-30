@@ -17,7 +17,7 @@ use surrealdb::sql::{Datetime, Uuid};
 async fn main() -> std::io::Result<()> {
     // Connect to the database server
 
-    use gressus::backend::database::db_requests::add_category;
+    use gressus::backend::database::db_requests::{add_category, change_password};
     let db = Surreal::new::<Ws>("127.0.0.1:8000").await.unwrap();
 
     // Signin to database
@@ -53,6 +53,7 @@ async fn main() -> std::io::Result<()> {
     println!("heiko's tasks: {:#?}", heiko_tasks);
     println!("heiko's events: {:#?}", heiko_events);
     change_username(&db, &micha_id, "michah").await;
+    change_password(&db, &micha_id, &"new_pass".as_bytes().to_vec()).await;
     delete_user(&db, &heiko_id).await;
     add_category(&db, &micha_id, &Uuid::new()).await;
     add_category(&db, &micha_id, &Uuid::new()).await;

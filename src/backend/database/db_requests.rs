@@ -106,6 +106,14 @@ pub async fn change_username(db: &Surreal<Client>, user: &Uuid, new_username: &s
     updated
 }
 
+///change password
+pub async fn change_password(db: &Surreal<Client>, user: &Uuid, new_password: &Vec<u8>) -> Option<User> {
+    let mut new_user = get_user(db, user).await.unwrap();
+    new_user.hashed_password = new_password.to_vec();
+    let updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
+    updated
+}
+
 ///add category to user
 pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid) -> Option<User> {
     let mut categories = get_categories(db, user).await;
