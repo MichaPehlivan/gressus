@@ -97,43 +97,31 @@ pub async fn user_id_from_name(db: &Surreal<Client>, name: &str) -> Option<Uuid>
 
 ///change username
 pub async fn change_username(db: &Surreal<Client>, user: &Uuid, new_username: &str) {
-    let query = format!("UPDATE users:`{}` SET name = \"{}\"", user.to_raw(), new_username);
-    db.query(query).await.unwrap();
+    let mut new_user = get_user(db, user).await.unwrap();
+    new_user.name = new_username.to_string();
+    let _updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
 }
 
 ///add category to user
 pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid) {
     let mut categories = get_categories(db, user).await;
     categories.push(new_category.clone());
-    let categories_str = uuid_vec_to_string(categories);
-    let query = format!("UPDATE users:`{}` SET categories = {}", user.to_raw(), categories_str);
-    db.query(query).await.unwrap();
+    let mut new_user = get_user(db, user).await.unwrap();
+    new_user.categories = categories;
+    let _updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
 }
 
 ///deletes a user
 pub async fn delete_user(db: &Surreal<Client>, user: &Uuid) {
-    let query = format!("DELETE users:`{}`", user.to_raw());
-    db.query(query).await.unwrap();
+    let _deleted: Option<User> = db.delete(("users", user.to_raw())).await.unwrap();
 }
 
 ///deletes a task
 pub async fn delete_task(db: &Surreal<Client>, task: &Uuid) {
-    let query = format!("DELETE tasks:`{}`", task.to_raw());
-    db.query(query).await.unwrap();
+    let _deleted: Option<Task> = db.delete(("tasks", task.to_raw())).await.unwrap();
 }
 
 ///deletes an event
 pub async fn delete_event(db: &Surreal<Client>, event: &Uuid) {
-    let query = format!("DELETE events:`{}`", event.to_raw());
-    db.query(query).await.unwrap();
-}
-
-/// convert vec of uuid's to string for queries
-fn uuid_vec_to_string(vec: Vec<Uuid>) -> String {
-    let mut result = String::from("[");
-    for x in vec {
-        result.push_str(&format!("{},", x.to_string()));
-    }
-    result.push(']');
-    result
+    let _deleted: Option<Event> = db.delete(("events", event.to_raw())).await.unwrap();
 }
