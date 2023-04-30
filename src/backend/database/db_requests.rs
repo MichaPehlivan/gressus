@@ -124,6 +124,51 @@ pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid
     updated
 }
 
+///change task name
+pub async fn task_edit_name(db: &Surreal<Client>, task: &Uuid, new_name: &str) -> Option<Task> {
+
+}
+
+///change task description
+pub async fn task_edit_desc(db: &Surreal<Client>, task: &Uuid, new_desc: &str) -> Option<Task> {
+
+}
+
+///change task timespan
+pub async fn task_edit_timespan(db: &Surreal<Client>, task: &Uuid, new_timespan: &Timespan) -> Option<Task> {
+
+}
+
+///change task category
+pub async fn task_change_category(db: &Surreal<Client>, task: &Uuid, new_category: &Uuid) -> Option<Task> {
+
+}
+
+///set the 'completed' field of a task
+pub async fn task_set_completion(db: &Surreal<Client>, task: &Uuid, completion: bool) -> Option<Task> {
+    
+}
+
+///change event name
+pub async fn event_edit_name(db: &Surreal<Client>, event: &Uuid, new_name: &str) -> Option<Event> {
+
+}
+
+///change event description
+pub async fn event_edit_desc(db: &Surreal<Client>, event: &Uuid, new_desc: &str) -> Option<Event> {
+
+}
+
+///change event timespan
+pub async fn event_edit_timespan(db: &Surreal<Client>, event: &Uuid, new_timespan: &Timespan) -> Option<Event> {
+
+}
+
+///change event category
+pub async fn event_change_category(db: &Surreal<Client>, event: &Uuid, new_category: &Uuid) -> Option<Event> {
+
+}
+
 ///deletes a user
 pub async fn delete_user(db: &Surreal<Client>, user: &Uuid) -> Option<User> {
     let deleted: Option<User> = db.delete(("users", user.to_raw())).await.unwrap();
