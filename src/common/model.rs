@@ -31,7 +31,7 @@ pub struct Event {
     pub uuid: Uuid,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Timespan {
     pub start: Datetime,
     pub end: Datetime,

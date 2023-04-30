@@ -68,6 +68,18 @@ pub async fn get_user(db: &Surreal<Client>, user_id: &Uuid) -> Option<User> {
     user
 }
 
+///get task from Uuid
+pub async fn get_task(db: &Surreal<Client>, task_id: &Uuid) -> Option<Task> {
+    let task: Option<Task> = db.select(("tasks", task_id.to_raw())).await.unwrap();
+    task
+}
+
+///get event from Uuid
+pub async fn get_event(db: &Surreal<Client>, event_id: &Uuid) -> Option<Event> {
+    let event: Option<Event> = db.select(("events", event_id.to_raw())).await.unwrap();
+    event
+}
+
 ///retrieve events for a given user
 pub async fn get_tasks(db: &Surreal<Client>, userid: &Uuid) -> Vec<Task> {
     let tasks: Vec<Task> = db.select("tasks").await.unwrap();
@@ -126,47 +138,74 @@ pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid
 
 ///change task name
 pub async fn task_edit_name(db: &Surreal<Client>, task: &Uuid, new_name: &str) -> Option<Task> {
-
+    let mut new_task = get_task(db, task).await.unwrap();
+    new_task.name = new_name.to_string();
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await.unwrap();
+    updated
 }
 
 ///change task description
 pub async fn task_edit_desc(db: &Surreal<Client>, task: &Uuid, new_desc: &str) -> Option<Task> {
-
+    let mut new_task = get_task(db, task).await.unwrap();
+    new_task.description = new_desc.to_string();
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await.unwrap();
+    updated
 }
 
 ///change task timespan
 pub async fn task_edit_timespan(db: &Surreal<Client>, task: &Uuid, new_timespan: &Timespan) -> Option<Task> {
-
+    let mut new_task = get_task(db, task).await.unwrap();
+    new_task.timespan = new_timespan.clone();
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await.unwrap();
+    updated
 }
 
 ///change task category
 pub async fn task_change_category(db: &Surreal<Client>, task: &Uuid, new_category: &Uuid) -> Option<Task> {
-
+    let mut new_task = get_task(db, task).await.unwrap();
+    new_task.category = new_category.clone();
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await.unwrap();
+    updated
 }
 
 ///set the 'completed' field of a task
 pub async fn task_set_completion(db: &Surreal<Client>, task: &Uuid, completion: bool) -> Option<Task> {
-    
+    let mut new_task = get_task(db, task).await.unwrap();
+    new_task.completed = completion;
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await.unwrap();
+    updated
 }
 
 ///change event name
 pub async fn event_edit_name(db: &Surreal<Client>, event: &Uuid, new_name: &str) -> Option<Event> {
-
+    let mut new_event = get_event(db, event).await.unwrap();
+    new_event.name = new_name.to_string();
+    let updated: Option<Event> = db.update(("events", event.to_raw())).content(new_event).await.unwrap();
+    updated
 }
 
 ///change event description
 pub async fn event_edit_desc(db: &Surreal<Client>, event: &Uuid, new_desc: &str) -> Option<Event> {
-
+    let mut new_event = get_event(db, event).await.unwrap();
+    new_event.description = new_desc.to_string();
+    let updated: Option<Event> = db.update(("events", event.to_raw())).content(new_event).await.unwrap();
+    updated    	
 }
 
 ///change event timespan
 pub async fn event_edit_timespan(db: &Surreal<Client>, event: &Uuid, new_timespan: &Timespan) -> Option<Event> {
-
+    let mut new_event = get_event(db, event).await.unwrap();
+    new_event.timespan = new_timespan.clone();
+    let updated: Option<Event> = db.update(("events", event.to_raw())).content(new_event).await.unwrap();
+    updated
 }
 
 ///change event category
 pub async fn event_change_category(db: &Surreal<Client>, event: &Uuid, new_category: &Uuid) -> Option<Event> {
-
+    let mut new_event = get_event(db, event).await.unwrap();
+    new_event.category = new_category.clone();
+    let updated: Option<Event> = db.update(("events", event.to_raw())).await.unwrap();
+    updated
 }
 
 ///deletes a user

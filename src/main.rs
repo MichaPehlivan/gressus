@@ -17,7 +17,7 @@ use surrealdb::sql::{Datetime, Uuid};
 async fn main() -> std::io::Result<()> {
     // Connect to the database server
 
-    use gressus::backend::database::db_requests::{add_category, change_password};
+    use gressus::backend::database::db_requests::{add_category, change_password, task_edit_name, task_set_completion, task_edit_desc, event_edit_name, event_edit_desc};
     let db = Surreal::new::<Ws>("127.0.0.1:8000").await.unwrap();
 
     // Signin to database
@@ -44,10 +44,19 @@ async fn main() -> std::io::Result<()> {
     add_event(&db, "event2", "test6", start, end, &Uuid::new(), &micha_id).await;
     add_event(&db, "event3", "test7", start, end, &Uuid::new(), &heiko_id).await;
     add_event(&db, "event4", "test8", start, end, &Uuid::new(), &heiko_id).await;
-    let micha_tasks = get_tasks(&db, &micha_id).await;
+    let mut micha_tasks = get_tasks(&db, &micha_id).await;
+    let mut heiko_events = get_events(&db, &heiko_id).await;
+    let test_task = micha_tasks.get(0).unwrap().uuid.clone();
+    let test_event = heiko_events.get(0).unwrap().uuid.clone();
+    task_edit_name(&db, &test_task, "new name!").await;
+    task_set_completion(&db, &test_task, true).await;
+    task_edit_desc(&db, &test_task, "now it has a description!").await;
+    event_edit_name(&db, &test_event, "new event!").await;
+    event_edit_desc(&db, &test_event, "event description!").await;
+    micha_tasks = get_tasks(&db, &micha_id).await;
     let heiko_tasks = get_tasks(&db, &heiko_id).await;
     let micha_events = get_events(&db, &micha_id).await;
-    let heiko_events = get_events(&db, &heiko_id).await;
+    heiko_events = get_events(&db, &heiko_id).await;
     println!("micha's tasks: {:#?}", micha_tasks);
     println!("micha's events: {:#?}", micha_events);
     println!("heiko's tasks: {:#?}", heiko_tasks);
