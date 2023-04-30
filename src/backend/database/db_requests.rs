@@ -4,10 +4,10 @@ use surrealdb::{sql::{Datetime, Uuid}, Surreal, engine::remote::ws::Client};
 use crate::common::model::{User, Timespan, Task, Event};
 
 ///adds user to database
-pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) {
+pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) -> User {
     if user_id_from_name(db, username).await != None {
         println!("user with that username already exists in the database");
-        return;
+        return User::default();
     }
 
     let time = Utc::now();
@@ -21,11 +21,12 @@ pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) 
         uuid: id.clone(),
     };
 
-    let _created: User = db.create(("users", id.to_raw())).content(new_user).await.unwrap();
+    let created: User = db.create(("users", id.to_raw())).content(new_user).await.unwrap();
+    created
 }
 
 ///adds task to database
-pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) {
+pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) -> Task {
     let timespan = Timespan::new(start, end);
     let id = Uuid::new();
 
@@ -39,11 +40,12 @@ pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start
         uuid: id.clone(),
     };
 
-    let _created: Task = db.create(("tasks", id.to_raw())).content(new_task).await.unwrap();
+    let created: Task = db.create(("tasks", id.to_raw())).content(new_task).await.unwrap();
+    created
 }
 
 ///adds event to database
-pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) {
+pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) -> Event {
     let timespan = Timespan::new(start, end);
     let id = Uuid::new();
 
@@ -56,7 +58,8 @@ pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, star
         uuid: id.clone(),
     };
 
-    let _created: Event = db.create(("events", id.to_raw())).content(new_event).await.unwrap();
+    let created: Event = db.create(("events", id.to_raw())).content(new_event).await.unwrap();
+    created
 }
 
 ///get user from Uuid
@@ -96,32 +99,37 @@ pub async fn user_id_from_name(db: &Surreal<Client>, name: &str) -> Option<Uuid>
 }
 
 ///change username
-pub async fn change_username(db: &Surreal<Client>, user: &Uuid, new_username: &str) {
+pub async fn change_username(db: &Surreal<Client>, user: &Uuid, new_username: &str) -> Option<User> {
     let mut new_user = get_user(db, user).await.unwrap();
     new_user.name = new_username.to_string();
-    let _updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
+    let updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
+    updated
 }
 
 ///add category to user
-pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid) {
+pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid) -> Option<User> {
     let mut categories = get_categories(db, user).await;
     categories.push(new_category.clone());
     let mut new_user = get_user(db, user).await.unwrap();
     new_user.categories = categories;
-    let _updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
+    let updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await.unwrap();
+    updated
 }
 
 ///deletes a user
-pub async fn delete_user(db: &Surreal<Client>, user: &Uuid) {
-    let _deleted: Option<User> = db.delete(("users", user.to_raw())).await.unwrap();
+pub async fn delete_user(db: &Surreal<Client>, user: &Uuid) -> Option<User> {
+    let deleted: Option<User> = db.delete(("users", user.to_raw())).await.unwrap();
+    deleted
 }
 
 ///deletes a task
-pub async fn delete_task(db: &Surreal<Client>, task: &Uuid) {
-    let _deleted: Option<Task> = db.delete(("tasks", task.to_raw())).await.unwrap();
+pub async fn delete_task(db: &Surreal<Client>, task: &Uuid) -> Option<Task> {
+    let deleted: Option<Task> = db.delete(("tasks", task.to_raw())).await.unwrap();
+    deleted
 }
 
 ///deletes an event
-pub async fn delete_event(db: &Surreal<Client>, event: &Uuid) {
-    let _deleted: Option<Event> = db.delete(("events", event.to_raw())).await.unwrap();
+pub async fn delete_event(db: &Surreal<Client>, event: &Uuid) -> Option<Event> {
+    let deleted: Option<Event> = db.delete(("events", event.to_raw())).await.unwrap();
+    deleted
 }
