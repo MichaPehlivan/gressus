@@ -1,3 +1,5 @@
+#![feature(drain_filter)]
+
 pub mod app;
 pub mod backend;
 pub mod common;

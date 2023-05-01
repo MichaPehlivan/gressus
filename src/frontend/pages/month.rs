@@ -1,27 +1,48 @@
+use crate::backend::database::db_requests;
+use crate::common::model::*;
+use chrono::{prelude::*, Days};
 use leptos::*;
-use time::*;
+use surrealdb::sql::Uuid;
+
+const WEEKS_IN_MONTH: u64 = 6;
+const WEEK_START: Weekday = Weekday::Mon;
+
+pub fn get_view_range(year: i32, month: u32) -> Option<(NaiveDate, NaiveDate)> {
+	// Get the DateTime of the first day of the month...
+	let first_of_month = NaiveDate::from_ymd_opt(year, month, 1)?;
+	// ...and the Date of the first day of the week...
+	let first_of_view = first_of_month.week(WEEK_START).first_day();
+	let last_of_view = first_of_view + Days::new(WEEKS_IN_MONTH * 7);
+	Some((first_of_view, last_of_view))
+}
+
+#[server(GetMonthItems, "/api")]
+pub async fn get_month_events(
+	user_id: Uuid,
+	year: i32,
+	month: u8,
+) -> Result<Vec<Event>, ServerFnError> {
+	use crate::app::DB;
+	let mut events = db_requests::get_events(&DB, &user_id).await;
+	let (first_of_month, last_of_month) = get_view_range(year, month.try_into().unwrap()).unwrap();
+	// let events_in_view = events.drain_filter(|e| {(e.timespan.end >= first_of_month)});
+	todo!();
+}
 
 #[component]
-pub fn MonthView(cx: Scope, year: i32, month: Month) -> impl IntoView {
-	// Get the Date of the first day of the month...
-	let first_of_month = Date::from_calendar_date(year, month, 1).unwrap();
-	// ...and the Date of the first day of the week...
-	let mut first_of_week = first_of_month;
-	//TODO: maybe create a setting for the first day of the week.
-	while first_of_week.weekday() != Weekday::Monday {
-		first_of_week = first_of_week.previous_day().unwrap();
-	}
+pub fn MonthView(cx: Scope, year: i32, month: u32) -> impl IntoView {
 	// ...such that we can now fill a vec with 35 dates, starting from the first of the week.
-	let mut current_date = first_of_week;
+	const ONE_DAY: Days = Days::new(1);
+	let (mut current_date, _) = get_view_range(year, month).unwrap();
 	let mut weeks = Vec::with_capacity(5);
-	for _rows in 0..6 {
+	for _rows in 0..WEEKS_IN_MONTH {
 		let mut days_in_week = Vec::with_capacity(7);
-		for _days_in_row in 0..7 {
+		for date in 0..7 {
 			days_in_week.push(view! {cx, <Day date=current_date/>});
-			current_date = current_date.next_day().unwrap();
+			current_date = current_date + ONE_DAY;
 		}
 		// weeks.push(view!{cx, <p class="empty"></p> {days_in_week}}); // Uncomment to disable week numbers. TODO: make config option.
-		weeks.push(view! {cx, <p class="weeknumber">{current_date.iso_week()}</p> {days_in_week}});
+		weeks.push(view! {cx, <p class="weeknumber">{current_date.iso_week().week()}</p> {days_in_week}});
 		// Comment to disable week numbers.
 	}
 
@@ -42,7 +63,7 @@ pub fn MonthView(cx: Scope, year: i32, month: Month) -> impl IntoView {
 }
 
 #[component]
-pub fn Day(cx: Scope, date: Date) -> impl IntoView {
+pub fn Day(cx: Scope, date: NaiveDate) -> impl IntoView {
 	let items_fill = (0..5)
 		.into_iter()
 		.map(

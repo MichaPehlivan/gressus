@@ -1,12 +1,24 @@
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use time::*;
+use chrono::prelude::*;
 
 use crate::frontend::*;
 use overlay::*;
 use pages::month::*;
 use pages::day::*;
+use surrealdb::Surreal;
+
+cfg_if::cfg_if! {
+	if #[cfg(feature = "ssr")] {
+		/// The surrealdb singleton
+		pub static DB: Surreal<surrealdb::engine::remote::ws::Client> = Surreal::init();
+
+		pub fn register_server_fns() {
+			_ = pages::month::GetMonthItems::register();
+		}
+	}
+}
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
@@ -28,8 +40,8 @@ pub fn App(cx: Scope) -> impl IntoView {
 			<main>
 				<Overlay>
 					<Routes>
-						<Route path="/month" view=|cx| view! { cx, <MonthView year=2023 month={Month::January}/> }/>
-						<Route path="/day" view=|cx| view!{cx, <DayView date={Date::from_calendar_date(2022, Month::December, 1).unwrap()} />}/>
+						<Route path="/month" view=|cx| view! { cx, <MonthView year=2023 month=5/> }/>
+						<Route path="/day" view=|cx| view!{cx, <DayView date={NaiveDate::from_ymd_opt(2023, 5, 1).unwrap()} />}/>
 					</Routes>
 				</Overlay>
 			</main>

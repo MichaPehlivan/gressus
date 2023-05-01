@@ -1,8 +1,8 @@
 use leptos::*;
-use time::*;
+use chrono::prelude::*;
 
 #[component]
-pub fn DayView(cx: Scope, date: Date) -> impl IntoView {
+pub fn DayView(cx: Scope, date: NaiveDate) -> impl IntoView {
 	let subdivide_by_minutes = 15;
 	let num_rows = (24 * 60) / subdivide_by_minutes;
 
@@ -24,7 +24,7 @@ pub fn DayView(cx: Scope, date: Date) -> impl IntoView {
 }
 
 #[component]
-pub fn DayItem(cx: Scope, start: Time) -> impl IntoView {
+pub fn DayItem(cx: Scope, start: NaiveDate) -> impl IntoView {
 	
 	view!{cx,
 		
