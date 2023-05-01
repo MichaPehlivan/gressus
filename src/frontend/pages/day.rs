@@ -11,7 +11,7 @@ pub fn DayView(cx: Scope, date: NaiveDate) -> impl IntoView {
 	for i in 1..11 {
 		let end = start + i;
 		fill_items.push(view! {cx,
-			<p class="dayview-items" style="grid-row-start: {start}; grid-row-end: {end};">"TODO: {i}!"</p>
+			<p class="dayview-item" style="grid-row-start: {start}; grid-row-end: {end};">"TODO: {i}!"</p>
 		});
 		start += i + 1;
 	}

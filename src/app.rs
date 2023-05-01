@@ -15,7 +15,7 @@ cfg_if::cfg_if! {
 		pub static DB: Surreal<surrealdb::engine::remote::ws::Client> = Surreal::init();
 
 		pub fn register_server_fns() {
-			_ = pages::month::GetMonthItems::register();
+			_ = pages::month::GetMonthEvents::register();
 		}
 	}
 }
