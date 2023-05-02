@@ -2,6 +2,7 @@ pub mod app;
 pub mod backend;
 pub mod common;
 pub mod frontend;
+pub mod tests;
 
 use cfg_if::cfg_if;
 
