@@ -1,6 +1,6 @@
 use actix_files::Files;
 use actix_web::*;
-use chrono::Utc;
+use chrono::prelude::*;
 use gressus::app::*;
 use gressus::backend::database::db_requests::{
 	add_event, add_task, add_user, change_username, delete_user, get_events, get_tasks,
@@ -21,6 +21,7 @@ async fn main() -> std::io::Result<()> {
 
 	use gressus::backend::database::db_requests::add_category;
 	use gressus::app::DB;
+	use surrealdb::sql::Duration;
 
 	let db = &DB;
 	db.connect::<Ws>("127.0.0.1:8000").await.unwrap();
@@ -41,7 +42,7 @@ async fn main() -> std::io::Result<()> {
 	let micha_id = user_id_from_name(&db, "micha").await.unwrap();
 	let heiko_id = user_id_from_name(&db, "heiko").await.unwrap();
 	let start = &Datetime::from(Utc::now());
-	let end = &Datetime::from(Utc::now());
+	let end = &Datetime::from(Utc::now() + Duration::hours(5));
 	add_task(&db, "task1", "test1", start, end, &Uuid::new(), &micha_id).await;
 	add_task(&db, "task2", "test2", start, end, &Uuid::new(), &micha_id).await;
 	add_task(&db, "task3", "test3", start, end, &Uuid::new(), &heiko_id).await;

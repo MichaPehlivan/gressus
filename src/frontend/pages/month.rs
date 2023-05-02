@@ -4,6 +4,8 @@ use chrono::{prelude::*, Days};
 use leptos::*;
 use surrealdb::sql::Uuid;
 
+use super::user_id_from_name;
+
 const WEEKS_IN_MONTH: u64 = 6;
 const WEEK_START: Weekday = Weekday::Mon;
 
@@ -19,7 +21,7 @@ pub fn get_view_range(year: i32, month: u32) -> Option<(NaiveDateTime, NaiveDate
 	Some((start_of_view, end_of_view))
 }
 
-/// Returns all the events of a user in a month view.
+#[doc = "Returns all the events of a user in a month view."]
 #[server(GetMonthEvents, "/api")]
 pub async fn get_month_events(
 	user_id: Uuid,
@@ -52,7 +54,7 @@ pub fn MonthView(cx: Scope, year: i32, month: u32) -> impl IntoView {
 	for _rows in 0..WEEKS_IN_MONTH {
 		// Fill a vec with all the Days in the week
 		let mut days_in_week = Vec::with_capacity(7);
-		for date in 0..7 {
+		for _day in 0..7 {
 			days_in_week.push(view! {cx, <Day date=current_date/>});
 			current_date = current_date + ONE_DAY;
 		}
@@ -91,6 +93,8 @@ pub fn Day(cx: Scope, date: NaiveDate) -> impl IntoView {
 		.collect::<Vec<_>>();
 	
 	
+	let get_uuid = create_resource(cx, || "heiko".into(), user_id_from_name);
+
 
 	view! {cx,
 		<div class="monthview-day">

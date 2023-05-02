@@ -2,10 +2,9 @@ pub mod day;
 pub mod home;
 pub mod month;
 
+use chrono::prelude::*;
 use leptos::*;
 use surrealdb::sql::Uuid;
-use chrono::prelude::*;
-
 
 use crate::common::model::Event;
 
@@ -16,11 +15,20 @@ pub fn get_day_view_range(date: NaiveDate) -> Option<(NaiveDateTime, NaiveDateTi
 	Some((start_of_view, end_of_view))
 }
 
-#[server(GetDayEvents, "/api")]
-pub async fn get_day_events(user_id: Uuid, date: NaiveDate) -> Result<Vec<Event>, ServerFnError>{
-	use crate::backend::database::db_requests;
-	use crate::app::DB;
+#[cfg(feature = "ssr")]
+use crate::app::DB;
+#[cfg(feature = "ssr")]
+use crate::backend::database::db_requests;
 
+#[server(UserIdFromName, "/api")]
+pub async fn user_id_from_name(name: String) -> Result<Uuid, ServerFnError> {
+	db_requests::user_id_from_name(&DB, &name)
+		.await
+		.ok_or(ServerFnError::ServerError("Name not found.".to_string()))
+}
+
+#[server(GetDayEvents, "/api")]
+pub async fn get_day_events(user_id: Uuid, date: NaiveDate) -> Result<Vec<Event>, ServerFnError> {
 	let mut events = db_requests::get_events(&DB, &user_id).await;
 	let (start_of_view, end_of_view) = get_day_view_range(date).unwrap();
 
@@ -29,9 +37,11 @@ pub async fn get_day_events(user_id: Uuid, date: NaiveDate) -> Result<Vec<Event>
 	let end_of_view = Utc.from_local_datetime(&end_of_view).unwrap();
 
 	// Filter for the events in the view range
-	let events_in_view = events.drain_filter(|e| {
-		e.timespan.end >= start_of_view.into() && e.timespan.start <= end_of_view.into()
-	}).collect::<Vec<_>>();
-	
+	let events_in_view = events
+		.drain_filter(|e| {
+			e.timespan.end >= start_of_view.into() && e.timespan.start <= end_of_view.into()
+		})
+		.collect::<Vec<_>>();
+
 	Ok(events_in_view)
 }

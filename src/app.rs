@@ -16,6 +16,8 @@ cfg_if::cfg_if! {
 
 		pub fn register_server_fns() {
 			_ = pages::month::GetMonthEvents::register();
+			_ = pages::GetDayEvents::register();
+			_ = pages::UserIdFromName::register();
 		}
 	}
 }
