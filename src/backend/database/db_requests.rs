@@ -1,15 +1,15 @@
 use chrono::Utc;
 use surrealdb::{sql::{Datetime, Uuid}, Surreal, engine::remote::ws::Client};
 
-use crate::common::model::{User, Timespan, Task, Event};
+use crate::backend::database::db_error::DBerror;
+use crate::common::model::{User, Timespan, Task, Event, Category};
 
 ///adds user to database
-pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) {
-    if user_id_from_name(db, username).await != None {
-        println!("user with that username already exists in the database");
-        return;
+pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) -> Result<User, DBerror> {
+    match user_id_from_name(db, username).await {
+        Ok(_) => return Err(DBerror::UserAlreadyExists(username.to_string())),
+        Err(_) => (),
     }
-
     let time = Utc::now();
     let id = Uuid::new();
 
@@ -18,14 +18,15 @@ pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) 
         hashed_password: password.to_vec(),
         joined_at: Datetime::from(time),
         categories: Vec::new(),
-        uuid: id,
+        uuid: id.clone(),
     };
+    let created: User = db.create(("users", id.to_raw())).content(new_user).await?;
 
-    let _created: User = db.create("users").content(new_user).await.unwrap();
+    Ok(created)
 }
 
 ///adds task to database
-pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) {
+pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) -> Result<Task, DBerror> {
     let timespan = Timespan::new(start, end);
     let id = Uuid::new();
 
@@ -36,14 +37,16 @@ pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start
         category: category.clone(),
         completed: false,
         user: user.clone(),
-        uuid: id,
+        uuid: id.clone(),
     };
 
-    let _created: Task = db.create("tasks").content(new_task).await.unwrap();
+    let created: Task = db.create(("tasks", id.to_raw())).content(new_task).await?;
+
+    Ok(created)
 }
 
 ///adds event to database
-pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) {
+pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) -> Result<Event, DBerror> {
     let timespan = Timespan::new(start, end);
     let id = Uuid::new();
 
@@ -53,92 +56,213 @@ pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, star
         timespan,
         category: category.clone(),
         user: user.clone(),
-        uuid: id,
+        uuid: id.clone(),
+    };
+    let created: Event = db.create(("events", id.to_raw())).content(new_event).await?;
+
+    Ok(created)
+}
+
+///adds category to database
+pub async fn add_category(db: &Surreal<Client>, name: &str, color: u32, user: &Uuid) -> Result<Category, DBerror> {
+    let id = Uuid::new();
+
+    let new_category = Category {
+        name: name.to_string(),
+        color,
+        user: user.clone(),
+        uuid: id.clone(),
     };
 
-    let _created: Event = db.create("events").content(new_event).await.unwrap();
+    let created: Category = db.create(("categories", id.to_raw())).content(new_category).await?;
+
+    let mut categories = get_categories(db, user).await?;
+    categories.push(id.clone());
+    let mut new_user = get_user(db, user).await?;
+    new_user.categories = categories;
+    let _updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await?;
+
+    Ok(created)
 }
 
 ///get user from Uuid
-pub async fn get_user(db: &Surreal<Client>, user_id: &Uuid) -> Option<User> {
-    let users: Vec<User> = db.select("users").await.unwrap();
-    for user in users {
-        if user.uuid == *user_id {
-            return Some(user);
-        }
-    }
-    return None
+pub async fn get_user(db: &Surreal<Client>, user_id: &Uuid) -> Result<User, DBerror> {
+    let user: Option<User> = db.select(("users", user_id.to_raw())).await?;
+    user.ok_or(DBerror::UserNotFound(user_id.clone()))
 }
 
-///retrieve events for a given user
-pub async fn get_tasks(db: &Surreal<Client>, userid: &Uuid) -> Vec<Task> {
-    let tasks: Vec<Task> = db.select("tasks").await.unwrap();
+///get task from Uuid
+pub async fn get_task(db: &Surreal<Client>, task_id: &Uuid) -> Result<Task, DBerror> {
+    let task: Option<Task> = db.select(("tasks", task_id.to_raw())).await?;
+    task.ok_or(DBerror::TaskNotFound(task_id.clone()))
+}
+
+///get event from Uuid
+pub async fn get_event(db: &Surreal<Client>, event_id: &Uuid) -> Result<Event, DBerror> {
+    let event: Option<Event> = db.select(("events", event_id.to_raw())).await?;
+    event.ok_or(DBerror::EventNotFound(event_id.clone()))
+}
+
+///get category from Uuid
+pub async fn get_category(db: &Surreal<Client>, category_id: &Uuid) -> Result<Category, DBerror> {
+    let category: Option<Category> = db.select(("categories", category_id.to_raw())).await?;
+    category.ok_or(DBerror::CategoryNotFound(category_id.clone()))
+}
+
+///retrieve tasks for a given user
+pub async fn get_tasks(db: &Surreal<Client>, userid: &Uuid) -> Result<Vec<Task>, DBerror> {
+    let tasks: Vec<Task> = db.select("tasks").await?;
     let tasks_filtered: Vec<Task> = tasks.into_iter().filter(|x| x.user == userid.clone()).collect();
-    tasks_filtered
+    Ok(tasks_filtered)
 }
 
 ///retrieve events for a given user
-pub async fn get_events(db: &Surreal<Client>, userid: &Uuid) -> Vec<Event> {
-    let events: Vec<Event> = db.select("events").await.unwrap();
+pub async fn get_events(db: &Surreal<Client>, userid: &Uuid) -> Result<Vec<Event>, DBerror> {
+    let events: Vec<Event> = db.select("events").await?;
     let events_filtered: Vec<Event> = events.into_iter().filter(|x| x.user == userid.clone()).collect();
-    events_filtered
+    Ok(events_filtered)
 }
 
 ///retrieve categories for a given user
-pub async fn get_categories(db: &Surreal<Client>, userid: &Uuid) -> Vec<Uuid> {
-    let user = get_user(db, userid).await.unwrap();
-    user.categories
+pub async fn get_categories(db: &Surreal<Client>, userid: &Uuid) -> Result<Vec<Uuid>, DBerror> {
+    let user = get_user(db, userid).await?;
+    Ok(user.categories)
 }
 
 ///retrieve user id from username
-pub async fn user_id_from_name(db: &Surreal<Client>, name: &str) -> Option<Uuid> {
-    let users: Vec<User> = db.select("users").await.unwrap();
+pub async fn user_id_from_name(db: &Surreal<Client>, name: &str) -> Result<Uuid, DBerror> {
+    let users: Vec<User> = db.select("users").await?;
     let users_filtered: Vec<User> = users.into_iter().filter(|x| x.name == *name).collect();
     match users_filtered.get(0) {
-        Some(x) => Some(x.uuid.clone()),
-        None => None,
+        Some(x) => Ok(x.uuid.clone()),
+        None => Err(DBerror::UserNameNotFound(name.to_string())),
     }
 }
 
 ///change username
-pub async fn change_username(db: &Surreal<Client>, user: &Uuid, new_username: &str) {
-    let query = format!("UPDATE users SET name = \"{}\" WHERE uuid = {}", new_username, user.to_string());
-    db.query(query).await.unwrap();
+pub async fn change_username(db: &Surreal<Client>, user: &Uuid, new_username: &str) -> Result<User, DBerror> {
+    let mut new_user = get_user(db, user).await?;
+    new_user.name = new_username.to_string();
+    let updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await?;
+    updated.ok_or(DBerror::UserNotFound(user.clone()))
 }
 
-///add category to user
-pub async fn add_category(db: &Surreal<Client>, user: &Uuid, new_category: &Uuid) {
-    let mut categories = get_categories(db, user).await;
-    categories.push(new_category.clone());
-    let categories_str = uuid_vec_to_string(categories);
-    let query = format!("UPDATE users SET categories = {} WHERE uuid = {}", categories_str, user.to_string());
-    db.query(query).await.unwrap();
+///change password
+pub async fn change_password(db: &Surreal<Client>, user: &Uuid, new_password: &Vec<u8>) -> Result<User, DBerror> {
+    let mut new_user = get_user(db, user).await?;
+    new_user.hashed_password = new_password.to_vec();
+    let updated: Option<User> = db.update(("users", user.to_raw())).content(new_user).await?;
+    updated.ok_or(DBerror::UserNotFound(user.clone()))
+}
+
+///change task name
+pub async fn task_edit_name(db: &Surreal<Client>, task: &Uuid, new_name: &str) -> Result<Task, DBerror> {
+    let mut new_task = get_task(db, task).await?;
+    new_task.name = new_name.to_string();
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await?;
+    updated.ok_or(DBerror::TaskNotFound(task.clone()))
+}
+
+///change task description
+pub async fn task_edit_desc(db: &Surreal<Client>, task: &Uuid, new_desc: &str) -> Result<Task, DBerror> {
+    let mut new_task = get_task(db, task).await?;
+    new_task.description = new_desc.to_string();
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await?;
+    updated.ok_or(DBerror::TaskNotFound(task.clone()))
+}
+
+///change task timespan
+pub async fn task_edit_timespan(db: &Surreal<Client>, task: &Uuid, new_timespan: &Timespan) -> Result<Task, DBerror> {
+    let mut new_task = get_task(db, task).await?;
+    new_task.timespan = new_timespan.clone();
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await?;
+    updated.ok_or(DBerror::TaskNotFound(task.clone()))
+}
+
+///change task category
+pub async fn task_change_category(db: &Surreal<Client>, task: &Uuid, new_category: &Uuid) -> Result<Task, DBerror> {
+    let mut new_task = get_task(db, task).await?;
+    new_task.category = new_category.clone();
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await?;
+    updated.ok_or(DBerror::TaskNotFound(task.clone()))
+}
+
+///set the 'completed' field of a task
+pub async fn task_set_completion(db: &Surreal<Client>, task: &Uuid, completion: bool) -> Result<Task, DBerror> {
+    let mut new_task = get_task(db, task).await?;
+    new_task.completed = completion;
+    let updated: Option<Task> = db.update(("tasks", task.to_raw())).content(new_task).await?;
+    updated.ok_or(DBerror::TaskNotFound(task.clone()))
+}
+
+///change event name
+pub async fn event_edit_name(db: &Surreal<Client>, event: &Uuid, new_name: &str) -> Result<Event, DBerror> {
+    let mut new_event = get_event(db, event).await?;
+    new_event.name = new_name.to_string();
+    let updated: Option<Event> = db.update(("events", event.to_raw())).content(new_event).await?;
+    updated.ok_or(DBerror::EventNotFound(event.clone()))
+}
+
+///change event description
+pub async fn event_edit_desc(db: &Surreal<Client>, event: &Uuid, new_desc: &str) -> Result<Event, DBerror> {
+    let mut new_event = get_event(db, event).await?;
+    new_event.description = new_desc.to_string();
+    let updated: Option<Event> = db.update(("events", event.to_raw())).content(new_event).await?;
+    updated.ok_or(DBerror::EventNotFound(event.clone()))    	
+}
+
+///change event timespan
+pub async fn event_edit_timespan(db: &Surreal<Client>, event: &Uuid, new_timespan: &Timespan) -> Result<Event, DBerror> {
+    let mut new_event = get_event(db, event).await?;
+    new_event.timespan = new_timespan.clone();
+    let updated: Option<Event> = db.update(("events", event.to_raw())).content(new_event).await?;
+    updated.ok_or(DBerror::EventNotFound(event.clone()))
+}
+
+///change event category
+pub async fn event_change_category(db: &Surreal<Client>, event: &Uuid, new_category: &Uuid) -> Result<Event, DBerror> {
+    let mut new_event = get_event(db, event).await?;
+    new_event.category = new_category.clone();
+    let updated: Option<Event> = db.update(("events", event.to_raw())).await?;
+    updated.ok_or(DBerror::EventNotFound(event.clone()))
+}
+
+///change category name
+pub async fn category_edit_name(db: &Surreal<Client>, category: &Uuid, new_name: &str) -> Result<Category, DBerror> {
+    let mut new_category = get_category(db, category).await?;
+    new_category.name = new_name.to_string();
+    let updated: Option<Category> = db.update(("categories", category.to_raw())).await?;
+    updated.ok_or(DBerror::CategoryNotFound(category.clone()))
+}
+
+///change category color
+pub async fn category_change_color(db: &Surreal<Client>, category: &Uuid, new_color: u32) -> Result<Category, DBerror> {
+    let mut new_category = get_category(db, category).await?;
+    new_category.color = new_color;
+    let updated: Option<Category> = db.update(("categories", category.to_raw())).await?;
+    updated.ok_or(DBerror::CategoryNotFound(category.clone()))
 }
 
 ///deletes a user
-pub async fn delete_user(db: &Surreal<Client>, user: &Uuid) {
-    let query = format!("DELETE FROM users WHERE uuid = {}", user.to_string());
-    db.query(query).await.unwrap();
+pub async fn delete_user(db: &Surreal<Client>, user: &Uuid) -> Result<User, DBerror> {
+    let deleted: Option<User> = db.delete(("users", user.to_raw())).await?;
+    deleted.ok_or(DBerror::UserNotFound(user.clone()))
 }
 
 ///deletes a task
-pub async fn delete_task(db: &Surreal<Client>, task: &Uuid) {
-    let query = format!("DELETE FROM tasks WHERE uuid = {}", task.to_string());
-    db.query(query).await.unwrap();
+pub async fn delete_task(db: &Surreal<Client>, task: &Uuid) -> Result<Task, DBerror> {
+    let deleted: Option<Task> = db.delete(("tasks", task.to_raw())).await?;
+    deleted.ok_or(DBerror::TaskNotFound(task.clone()))
 }
 
 ///deletes an event
-pub async fn delete_event(db: &Surreal<Client>, event: &Uuid) {
-    let query = format!("DELETE FROM events WHERE uuid = {}", event.to_string());
-    db.query(query).await.unwrap();
+pub async fn delete_event(db: &Surreal<Client>, event: &Uuid) -> Result<Event, DBerror> {
+    let deleted: Option<Event> = db.delete(("events", event.to_raw())).await?;
+    deleted.ok_or(DBerror::EventNotFound(event.clone()))
 }
 
-//
-fn uuid_vec_to_string(vec: Vec<Uuid>) -> String {
-    let mut result = String::from("[");
-    for x in vec {
-        result.push_str(&format!("{},", x.to_string()));
-    }
-    result.push(']');
-    result
+///deletes a category
+pub async fn delete_category(db: Surreal<Client>, category: &Uuid) -> Result<Category, DBerror> {
+    let deleted: Option<Category> = db.delete(("categories", category.to_raw())).await?;
+    deleted.ok_or(DBerror::CategoryNotFound(category.clone()))
 }

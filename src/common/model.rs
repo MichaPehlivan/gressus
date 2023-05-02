@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use surrealdb::sql::{Datetime, Uuid};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct User {
     pub name: String,
     pub hashed_password: Vec<u8>,
@@ -32,6 +32,14 @@ pub struct Event {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct Category {
+    pub name: String,
+    pub color: u32,
+    pub user: Uuid,
+    pub uuid: Uuid,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Timespan {
     pub start: Datetime,
     pub end: Datetime,
