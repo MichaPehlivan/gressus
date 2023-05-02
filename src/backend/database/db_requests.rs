@@ -1,5 +1,5 @@
-use chrono::Utc;
-use surrealdb::{sql::{Datetime, Uuid}, Surreal, engine::remote::ws::Client};
+use chrono::{Utc, DateTime};
+use surrealdb::{sql::Uuid, Surreal, engine::remote::ws::Client};
 
 use crate::backend::database::db_error::DBerror;
 use crate::common::model::{User, Timespan, Task, Event, Category};
@@ -16,7 +16,7 @@ pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) 
     let new_user = User {
         name: username.to_string(),
         hashed_password: password.to_vec(),
-        joined_at: Datetime::from(time),
+        joined_at: time,
         categories: Vec::new(),
         uuid: id.clone(),
     };
@@ -26,7 +26,7 @@ pub async fn add_user(db: &Surreal<Client>, username: &str, password: &Vec<u8>) 
 }
 
 ///adds task to database
-pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) -> Result<Task, DBerror> {
+pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start: &DateTime::<Utc>, end: &DateTime::<Utc>, category: &Uuid, user: &Uuid) -> Result<Task, DBerror> {
     let timespan = Timespan::new(start, end);
     let id = Uuid::new();
 
@@ -46,7 +46,7 @@ pub async fn add_task(db: &Surreal<Client>, name: &str, description: &str, start
 }
 
 ///adds event to database
-pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, start: &Datetime, end: &Datetime, category: &Uuid, user: &Uuid) -> Result<Event, DBerror> {
+pub async fn add_event(db: &Surreal<Client>, name: &str, description: &str, start: &DateTime::<Utc>, end: &DateTime::<Utc>, category: &Uuid, user: &Uuid) -> Result<Event, DBerror> {
     let timespan = Timespan::new(start, end);
     let id = Uuid::new();
 
