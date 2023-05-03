@@ -45,7 +45,7 @@ pub fn App(cx: Scope) -> impl IntoView {
 				<Overlay>
 					<Routes>
 						<Route path="/month" view=|cx| view! { cx, <MonthView year=2023 month=5/> }/>
-						<Route path="/day" view=|cx| view!{cx, <DayView date={NaiveDate::from_ymd_opt(2023, 5, 1).unwrap()} />}/>
+						<Route path="/day" view=|cx| view!{cx, <DayView date={NaiveDate::from_ymd_opt(2023, 5, 3).unwrap()} />}/>
 					</Routes>
 				</Overlay>
 			</main>

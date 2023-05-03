@@ -105,8 +105,7 @@ pub fn Day(
 	date: NaiveDate,
 ) -> impl IntoView {
 	// Retrieves the events of a user on a day.
-	async fn get_events(args: (String, NaiveDate)) -> Vec<Event> {
-		let (name, date) = args;
+	async fn get_events((name, date): (String, NaiveDate)) -> Vec<Event> {
 		let id = common::api::user_id_from_name(name).await.unwrap();
 		let events = get_day_events(id, date).await.unwrap();
 		events
@@ -121,7 +120,7 @@ pub fn Day(
 		}
 	};
 
-	let event_view = move || {
+	let events_view = move || {
 		events.read(cx).map(|events| {
 			view! {cx,
 				<For
@@ -138,7 +137,7 @@ pub fn Day(
 			<p class="monthview-day-datum">{date.day()}</p>
 			<div class="monthview-day-items-wrapper">
 				<Suspense fallback=move || view! {cx, <p>"Loading..."</p>}>
-					{event_view}
+					{events_view}
 				</Suspense>
 			</div>
 		</div>

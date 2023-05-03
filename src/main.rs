@@ -135,15 +135,15 @@ async fn main() -> std::io::Result<()> {
 				routes.to_owned(),
 				move |cx| {
 					// TODO: provide extra (server-side!) context here, with:
-					// 
+					//
 					// provide_context(cx, value);
-					// 
+					//
 					// such as:
 					// - Access to the database
 					// - Access to the session pool
 					// - Etc
 					// such that we can for example:
-					// - Write a basic authentication guard.
+					// - Write a basic authentication guard with actix-session and actix-identity
 				},
 				|cx| view! { cx, <App/> },
 			)
