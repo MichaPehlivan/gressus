@@ -118,6 +118,11 @@ async fn main() -> std::io::Result<()> {
 
 	register_server_fns();
 
+	// use actix_identity::IdentityMiddleware;
+	// use actix_session::{SessionMiddleware, storage::CookieSessionStore};
+
+	// let secret_key = actix_web::cookie::Key::generate();
+
 	HttpServer::new(move || {
 		let leptos_options = &conf.leptos_options;
 		let site_root = &leptos_options.site_root;
@@ -125,9 +130,21 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.service(actix_web::web::redirect("/", "/month"))
 			.route("/api/{tail:.*}", leptos_actix::handle_server_fns())
-			.leptos_routes(
+			.leptos_routes_with_context(
 				leptos_options.to_owned(),
 				routes.to_owned(),
+				move |cx| {
+					// TODO: provide extra (server-side!) context here, with:
+					// 
+					// provide_context(cx, value);
+					// 
+					// such as:
+					// - Access to the database
+					// - Access to the session pool
+					// - Etc
+					// such that we can for example:
+					// - Write a basic authentication guard.
+				},
 				|cx| view! { cx, <App/> },
 			)
 			.service(Files::new("/", site_root))

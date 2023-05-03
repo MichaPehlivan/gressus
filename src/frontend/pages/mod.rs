@@ -1,6 +1,7 @@
 pub mod day;
 pub mod home;
 pub mod month;
+pub mod login;
 
 use chrono::prelude::*;
 use leptos::*;
