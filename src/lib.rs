@@ -1,6 +1,7 @@
 #![feature(drain_filter)]
 
 pub mod app;
+#[cfg(feature = "ssr")]
 pub mod backend;
 pub mod common;
 pub mod frontend;

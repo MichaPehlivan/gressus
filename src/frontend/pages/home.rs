@@ -1,6 +1,6 @@
 use leptos::*;
 
-/// Renders the home page of your application.
+/// Renders the home page of your application. TODO: create homepage
 #[component]
 fn HomePage(cx: Scope) -> impl IntoView {
 	// Creates a reactive value to update the button

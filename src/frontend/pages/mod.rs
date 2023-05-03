@@ -25,6 +25,7 @@ pub async fn get_day_events(user_id: Uuid, date: NaiveDate) -> Result<Vec<Event>
 	let mut events = db_requests::get_events(&DB, &user_id)
 		.await
 		.to_server_error()?;
+
 	let (start_of_view, end_of_view) = get_day_view_range(date).unwrap();
 
 	// Convert the range into timezone-aware DateTimes
