@@ -1375,7 +1375,6 @@ dependencies = [
  "simple_logger",
  "surrealdb",
  "thiserror",
- "time 0.3.20",
  "tokio",
  "wasm-bindgen",
 ]

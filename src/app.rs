@@ -1,12 +1,12 @@
+use chrono::prelude::*;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use chrono::prelude::*;
 
 use crate::frontend::*;
 use overlay::*;
-use pages::month::*;
 use pages::day::*;
+use pages::month::*;
 use surrealdb::Surreal;
 
 cfg_if::cfg_if! {
@@ -16,8 +16,10 @@ cfg_if::cfg_if! {
 
 		pub fn register_server_fns() {
 			_ = pages::month::GetMonthEvents::register();
+
+			use crate::common::api::*;
 			_ = pages::GetDayEvents::register();
-			_ = pages::UserIdFromName::register();
+			_ = UserIdFromName::register();
 		}
 	}
 }

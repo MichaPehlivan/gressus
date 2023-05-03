@@ -18,18 +18,13 @@ pub fn get_day_view_range(date: NaiveDate) -> Option<(NaiveDateTime, NaiveDateTi
 #[cfg(feature = "ssr")]
 use crate::app::DB;
 #[cfg(feature = "ssr")]
-use crate::backend::database::db_requests;
-
-#[server(UserIdFromName, "/api")]
-pub async fn user_id_from_name(name: String) -> Result<Uuid, ServerFnError> {
-	db_requests::user_id_from_name(&DB, &name)
-		.await
-		.ok_or(ServerFnError::ServerError("Name not found.".to_string()))
-}
+use crate::backend::database::{db_error::DBResultConvert, db_requests};
 
 #[server(GetDayEvents, "/api")]
 pub async fn get_day_events(user_id: Uuid, date: NaiveDate) -> Result<Vec<Event>, ServerFnError> {
-	let mut events = db_requests::get_events(&DB, &user_id).await;
+	let mut events = db_requests::get_events(&DB, &user_id)
+		.await
+		.to_server_error()?;
 	let (start_of_view, end_of_view) = get_day_view_range(date).unwrap();
 
 	// Convert the range into timezone-aware DateTimes

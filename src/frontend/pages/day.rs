@@ -1,5 +1,5 @@
-use leptos::*;
 use chrono::prelude::*;
+use leptos::*;
 
 #[component]
 pub fn DayView(cx: Scope, date: NaiveDate) -> impl IntoView {
@@ -25,8 +25,7 @@ pub fn DayView(cx: Scope, date: NaiveDate) -> impl IntoView {
 
 #[component]
 pub fn DayItem(cx: Scope, start: NaiveDate) -> impl IntoView {
-	
-	view!{cx,
-		
+	view! {cx,
+
 	}
 }
