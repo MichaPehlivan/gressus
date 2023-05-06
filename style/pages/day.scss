@@ -1,11 +1,23 @@
 @import "../colors";
 
 .dayview {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+}
+
+.dayview-navbar {
+
+}
+
+.dayview-item-container {
 	display: grid;
 	grid-auto-columns: 1fr;
 	column-gap: 10px;
 	min-height: 0;
 	height: 100%;
+	width: 100%;
 }
 
 .dayview-item {
