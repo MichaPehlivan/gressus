@@ -29,6 +29,7 @@ pub fn App(cx: Scope) -> impl IntoView {
 	// Provides context that manages stylesheets, titles, meta tags, etc.
 	provide_meta_context(cx);
 
+
 	view! {
 		cx,
 
@@ -45,7 +46,7 @@ pub fn App(cx: Scope) -> impl IntoView {
 				<Overlay>
 					<Routes>
 						<Route path="/month" view=|cx| view! { cx, <MonthView year=2023 month=5/> }/>
-						<Route path="/day" view=|cx| view!{cx, <DayView date={NaiveDate::from_ymd_opt(2023, 5, 3).unwrap()} />}/>
+						<Route path="/day/:date" view=|cx| view!{cx, <DayView/>}/>
 					</Routes>
 				</Overlay>
 			</main>
