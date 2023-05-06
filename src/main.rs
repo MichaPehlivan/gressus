@@ -148,7 +148,7 @@ async fn main() -> std::io::Result<()> {
 				|cx| view! { cx, <App/> },
 			)
 			.service(Files::new("/", site_root))
-		//.wrap(middleware::Compress::default())
+			.wrap(middleware::Compress::default())
 	})
 	.bind(&addr)?
 	.run()
