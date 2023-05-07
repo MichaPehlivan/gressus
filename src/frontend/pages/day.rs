@@ -1,4 +1,4 @@
-use std::{rc::Rc, time::Duration, thread::sleep};
+use std::rc::Rc;
 
 use chrono::{prelude::*, Days};
 use leptos::*;
@@ -23,40 +23,56 @@ const ONE_DAY: Days = Days::new(1);
 #[component]
 pub fn DayView(cx: Scope, #[prop(optional)] date: Option<Signal<NaiveDate>>) -> impl IntoView {
 	let date = match date {
-		Some(d) => d,
-		None => create_memo(cx, move |_| use_params::<DayViewParams>(cx)().unwrap().date.0).into(),
-	};
+		Some(d) => Signal::derive(cx, move || Ok(d())),
+		None => create_memo(cx, move |_| {
+			use_params::<DayViewParams>(cx)().map(|v| v.date.0)
+		})
+		.into(),
+	}; // Signal with error, as date parsing may go wrong.
 
-	async fn get_events((name, date): (String, NaiveDate)) -> Vec<Event> {
+	// Accepts an Option<NaiveDate> as we have to bubble a possible parse error up.
+	async fn get_events((name, date): (String, Option<NaiveDate>)) -> Option<Vec<Event>> {
 		let id = api::user_id_from_name(name).await.unwrap();
-		let events = get_day_events(id, date).await.unwrap();
-		// sleep(Duration::from_secs(10));
-		events
+		let events = get_day_events(id, date?).await.unwrap();
+		Some(events)
 	}
 
-	let events = create_resource(cx, move || ("michah".into(), date()), get_events); //TODO: change name
+	let events = create_resource(cx, move || ("michah".into(), date().ok()), get_events); //TODO: change name
 
 	let for_view = move |cx, event: Event| {
 		view! {
 			cx,
-			<DayEvent event date=date/>
+			<DayEvent event date={Signal::derive(cx, move || date().unwrap())}/> // Unwrap is allowed here, as `for_view` will not be called when there is an error.
 		}
 	};
 
 	let events_view = move || {
-		events.read(cx).map(|events| {
-			view! {cx,
-				<For
-					each=move || {events.clone()}
-					key=|event| event.uuid.clone()
-					view=for_view
-				/>
-			}
+		events.read(cx).map(|opt| match opt {
+			Some(events) => view! {cx,
+				<div class="dayview-item-container" style=move || format!("grid-template-rows: repeat({NUM_ROWS}, 1fr);")>
+					<For
+						each=move || {events.clone()}
+						key=|event| event.uuid.clone()
+						view=for_view
+					/>
+				</div>
+			},
+			None => view! {cx,
+				<div>
+					<Redirect path="/notfound"/>
+				</div>
+			},
 		})
 	};
 
-	let next_date = move || ( date() + ONE_DAY ).format("/day/%Y-%m-%d").to_string();
-	let prev_date = move || ( date() - ONE_DAY ).format("/day/%Y-%m-%d").to_string();
+	let next_date = move || match date() {
+		Ok(d) => (d + ONE_DAY).format("/day/%Y-%m-%d").to_string(),
+		Err(_) => "/notfound".to_string(), // If the current day is not valid, the next day is not either.
+	};
+	let prev_date = move || match date() {
+		Ok(d) => (d - ONE_DAY).format("/day/%Y-%m-%d").to_string(),
+		Err(_) => "/notfound".to_string(), // If the current day is not valid, the previous day is not either.
+	};
 
 	view! {cx,
 		<div class="dayview">
@@ -64,11 +80,9 @@ pub fn DayView(cx: Scope, #[prop(optional)] date: Option<Signal<NaiveDate>>) -> 
 				<A href=next_date>"Next day"</A>
 				<A href=prev_date>"Previous day"</A>
 			</div>
-			<div class="dayview-item-container" style="grid-template-rows: repeat({NUM_ROWS}, 1fr);">
 				<Suspense fallback=move || view! {cx, <p class="loading" style="grid-row: 1 / 20">"Loading..."</p>}>
 					{ events_view }
 				</Suspense>
-			</div>
 		</div>
 	}
 }
@@ -97,7 +111,7 @@ pub fn DayEvent(cx: Scope, event: Event, date: Signal<NaiveDate>) -> impl IntoVi
 
 		format!("grid-row-start: {start_row}; grid-row-end: {end_row};")
 	};
-	
+
 	let title = event.name;
 
 	view! {cx,

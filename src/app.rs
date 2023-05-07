@@ -44,6 +44,7 @@ pub fn App(cx: Scope) -> impl IntoView {
 			<main>
 				<Overlay>
 					<Routes>
+						<Route path="/notfound" view=|cx| view! {cx, <Redirect path="/month"/>}/>
 						<Route path="/month" view=|cx| view! { cx, <MonthView year=2023 month=5/> }/>
 						<Route path="/day/:date" view=|cx| view!{cx, <DayView/>}/>
 					</Routes>
