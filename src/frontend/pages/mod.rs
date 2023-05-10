@@ -6,8 +6,15 @@ pub mod login;
 use chrono::prelude::*;
 use leptos::*;
 use surrealdb::sql::Uuid;
+use thiserror::Error;
 
 use crate::common::model::Event;
+
+#[derive(Error, Debug)]
+pub enum ViewError {
+	#[error("Date out of range.")]
+	OutOfRangeError,
+}
 
 /// Returns the first and the last possible NaiveDateTime of this day's view.
 pub fn get_day_view_range(date: NaiveDate) -> Option<(NaiveDateTime, NaiveDateTime)> {

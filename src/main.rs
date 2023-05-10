@@ -128,7 +128,7 @@ async fn main() -> std::io::Result<()> {
 		let site_root = &leptos_options.site_root;
 
 		App::new()
-			.service(actix_web::web::redirect("/", "/month"))
+			.service(actix_web::web::redirect("/", "/month/2023/5"))
 			.route("/api/{tail:.*}", leptos_actix::handle_server_fns())
 			.leptos_routes_with_context(
 				leptos_options.to_owned(),

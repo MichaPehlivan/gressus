@@ -14,7 +14,7 @@ cfg_if::cfg_if! {
 		pub static DB: Surreal<surrealdb::engine::remote::ws::Client> = Surreal::init();
 
 		pub fn register_server_fns() {
-			_ = pages::month::GetMonthEvents::register();
+			// _ = pages::month::GetMonthEvents::register();
 
 			use crate::common::api::*;
 			_ = pages::GetDayEvents::register();
@@ -44,8 +44,8 @@ pub fn App(cx: Scope) -> impl IntoView {
 			<main>
 				<Overlay>
 					<Routes>
-						<Route path="/notfound" view=|cx| view! {cx, <Redirect path="/month"/>}/>
-						<Route path="/month" view=|cx| view! { cx, <MonthView year=2023 month=5/> }/>
+						<Route path="/notfound" view=|cx| view! {cx, <Redirect path="/month/2023/5"/>}/>
+						<Route path="/month/:year/:month" view=|cx| view! { cx, <MonthView/> }/>
 						<Route path="/day/:date" view=|cx| view!{cx, <DayView/>}/>
 					</Routes>
 				</Overlay>

@@ -19,7 +19,7 @@ pub fn Navbar(cx: Scope) -> impl IntoView {
 				<p>"TODO:"</p>
 			</div>
 			<div class="navbar-right">
-				<A href="/user">
+				<A href="user">
 					<img id="usericon" src="/icons/user.svg"/>
 				</A>
 			</div>
