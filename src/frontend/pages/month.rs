@@ -1,4 +1,5 @@
-use std::rc::Rc;
+
+use std::sync::Arc;
 
 use crate::{common, frontend::pages::ViewError};
 // use crate::backend::database::db_requests;
@@ -53,7 +54,7 @@ pub fn MonthView(
 	let first_of_view = create_memo(cx, move |_| {
 		let (year, month) = ym()?;
 		get_first_of_view(year, month)
-			.ok_or(ParamsError::Params(Rc::from(ViewError::OutOfRangeError)))
+			.ok_or(ParamsError::Params(Arc::new(ViewError::OutOfRangeError)))
 	});
 
 	let mut weeks = Vec::with_capacity(WEEKS_IN_MONTH as usize);
@@ -126,25 +127,23 @@ pub fn MonthView(
 	};
 
 	view! {cx,
-		// <ErrorBoundary fallback=move |_, _| view!{cx, <Redirect path="/notfound"/>}>
-			<A href=next_month>"Next month"</A>
-			<A href=prev_month>"Previous month"</A>
-			<div class="monthview">
-				<p>"Week"</p>
-				<p>"Mon"</p>
-				<p>"Tue"</p>
-				<p>"Wed"</p>
-				<p>"Thi"</p>
-				<p>"Fri"</p>
-				<p>"Sat"</p>
-				<p>"Sun"</p>
-				<For
-					each=weeks
-					key=|week| week.0
-					view=render_weeks
-				/>
-			</div>
-		// </ErrorBoundary>
+		<A href=next_month>"Next month"</A>
+		<A href=prev_month>"Previous month"</A>
+		<div class="monthview">
+			<p>"Week"</p>
+			<p>"Mon"</p>
+			<p>"Tue"</p>
+			<p>"Wed"</p>
+			<p>"Thi"</p>
+			<p>"Fri"</p>
+			<p>"Sat"</p>
+			<p>"Sun"</p>
+			<For
+				each=weeks
+				key=|week| week.0
+				view=render_weeks
+			/>
+		</div>
 	}
 }
 
@@ -155,7 +154,7 @@ pub fn Day(
 	/// The date of this day view.
 	date: Signal<NaiveDate>,
 ) -> impl IntoView {
-	log!("Create_day");
+	// log!("Create_day");
 	// Retrieves the events of a user on a day.
 	async fn get_events((name, date): (String, NaiveDate)) -> Vec<Event> {
 		let id = common::api::user_id_from_name(name).await.unwrap();
@@ -168,7 +167,7 @@ pub fn Day(
 	let (events, set_events) = create_signal(cx, Vec::<Event>::new());
 
 	let events_view = Signal::derive(cx, move || {
-		log!("events_view!");
+		// log!("events_view!");
 		events_resource.read(cx).map(|mut ev| {
 			set_events.update(|v| {
 				v.clear();
@@ -183,7 +182,7 @@ pub fn Day(
 				<div class="monthview-day-items-wrapper">
 					<Transition fallback=move || view! {cx, <p>"Loading..."</p>}>
 						{events_view}
-						{move || events().into_iter().map(|event| view!{cx, <DayEvent event/>}).collect::<Vec<_>>()} // Something here contains a bug where very many copies of a day are created.
+						{move || events().into_iter().map(|event| view!{cx, <DayEvent event/>}).collect::<Vec<_>>()}
 					</Transition>
 				</div>
 			</div>
@@ -193,7 +192,6 @@ pub fn Day(
 #[component]
 pub fn DayEvent(cx: Scope, event: Event) -> impl IntoView {
 	let title = event.name;
-	// log!("Created day event {:?}.", &1);
 	view! {cx,
 		<p class="monthview-day-event" style=format!("background-color: #4a9cb3")>{title}</p>
 	}

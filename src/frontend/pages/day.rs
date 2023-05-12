@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use chrono::{prelude::*, Days};
 use leptos::*;
@@ -130,7 +130,7 @@ impl IntoParam for NaiveDateWrapper {
 		let parse = value.parse::<NaiveDate>();
 		let date = match parse {
 			Ok(date) => date,
-			Err(e) => return Err(ParamsError::Params(Rc::new(e))),
+			Err(e) => return Err(ParamsError::Params(Arc::new(e))),
 		};
 		Ok(Self(date))
 	}
