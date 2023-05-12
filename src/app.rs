@@ -6,10 +6,10 @@ use crate::frontend::*;
 use overlay::*;
 use pages::day::*;
 use pages::month::*;
-use surrealdb::Surreal;
 
 cfg_if::cfg_if! {
 	if #[cfg(feature = "ssr")] {
+		use surrealdb::Surreal;
 		/// The surrealdb singleton
 		pub static DB: Surreal<surrealdb::engine::remote::ws::Client> = Surreal::init();
 

@@ -89,7 +89,6 @@ pub fn MonthView(
 				each=foreach
 				key=|d| d.0
 				view=move |cx, day| {
-					// log!("Reloading week item.");
 					let date = day.1;
 					view! {cx,
 						<Day date/>
