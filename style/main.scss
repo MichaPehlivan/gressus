@@ -12,7 +12,8 @@ html {
 	height: 100%;
 }
 
-body, main {
+body,
+main {
 	font-family: sans-serif;
 	// text-align: center;
 	padding: 0px;
@@ -28,4 +29,15 @@ body, main {
 .loading {
 	padding: 0px;
 	margin: 0px;
+}
+
+.reset-a,
+.reset-a:hover,
+.reset-a:visited,
+.reset-a:focus,
+.reset-a:active {
+	text-decoration: none;
+	color: inherit;
+	outline: 0;
+	cursor: auto;
 }

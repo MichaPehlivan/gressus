@@ -45,8 +45,9 @@ pub fn MonthView(
 	let ym = Signal::derive(cx, move || {
 		Ok(match ym {
 			Some(ym) => ym(),
-			None => match use_params::<MonthViewParams>(cx)()? {
-				MonthViewParams { year, month } => (year, month),
+			None => match use_params::<MonthViewParams>(cx)() {
+				Ok(MonthViewParams { year, month }) => (year, month),
+				Err(e) => (2017, 1), //TODO: handle error
 			},
 		})
 	});
@@ -175,6 +176,8 @@ pub fn Day(
 		});
 	});
 
+	let day_view_link = move || date().format("/day/%Y-%m-%d").to_string();
+
 	view! {cx,
 			<div class="monthview-day">
 				<p class="monthview-day-datum">{move || date().day()}</p>
@@ -184,6 +187,7 @@ pub fn Day(
 						{move || events().into_iter().map(|event| view!{cx, <DayEvent event/>}).collect::<Vec<_>>()}
 					</Transition>
 				</div>
+				<a href=day_view_link class="monthview-dayview-link reset-a">""</a>
 			</div>
 		}
 }
