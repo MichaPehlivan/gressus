@@ -22,13 +22,15 @@ const ONE_DAY: Days = Days::new(1);
 
 #[component]
 pub fn DayView(cx: Scope, #[prop(optional)] date: Option<Signal<NaiveDate>>) -> impl IntoView {
-	let date = match date {
-		Some(d) => Signal::derive(cx, move || Ok(d())),
-		None => create_memo(cx, move |_| {
-			use_params::<DayViewParams>(cx)().map(|v| v.date.0)
+	let date: Signal<Result<NaiveDate, ParamsError>> = Signal::derive(cx, move || {
+		Ok(match date {
+			Some(d) => d(),
+			None => match use_params::<DayViewParams>(cx)() {
+				Ok(p) => p.date.0,
+				Err(e) => NaiveDate::default(), //TODO: handle error
+			},
 		})
-		.into(),
-	}; // Signal with error, as date parsing may go wrong.
+	});
 
 	// Accepts an Option<NaiveDate> as we have to bubble a possible parse error up.
 	async fn get_events((name, date): (String, Option<NaiveDate>)) -> Option<Vec<Event>> {
@@ -80,9 +82,9 @@ pub fn DayView(cx: Scope, #[prop(optional)] date: Option<Signal<NaiveDate>>) -> 
 				<A href=next_date>"Next day"</A>
 				<A href=prev_date>"Previous day"</A>
 			</div>
-				<Suspense fallback=move || view! {cx, <p class="loading" style="grid-row: 1 / 20">"Loading..."</p>}>
+				<Transition fallback=move || view! {cx, <p class="loading" style="grid-row: 1 / 20">"Loading..."</p>}>
 					{ events_view }
-				</Suspense>
+				</Transition>
 		</div>
 	}
 }
