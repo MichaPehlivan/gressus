@@ -1,4 +1,3 @@
-
 use std::sync::Arc;
 
 use crate::{common, frontend::pages::ViewError};
@@ -13,15 +12,16 @@ use leptos_router::*;
 
 use super::get_day_events;
 
-const WEEKS_IN_MONTH: u64 = 6;
-const WEEK_START: Weekday = Weekday::Mon;
+pub const WEEKS_IN_MONTH: u64 = 6;
+pub const DAYS_IN_MONTH: u64 = WEEKS_IN_MONTH * 7;
+pub const WEEK_START: Weekday = Weekday::Mon;
 
 /// Returns the first and the last possible NaiveDateTime of this month's view.
 pub fn get_first_of_view(year: i32, month: u8) -> Option<NaiveDateTime> {
 	let first_of_month = NaiveDate::from_ymd_opt(year, month as u32, 1)?;
 	// View in Dates
 	let start_of_view = first_of_month.week(WEEK_START).first_day();
-	// let end_of_view = start_of_view + Days::new(WEEKS_IN_MONTH * 7);
+	// let end_of_view = start_of_view + Days::new(DAYS_IN_MONTH);
 	// View in DateTimes
 	let start_of_view = start_of_view.and_time(NaiveTime::from_hms_opt(0, 0, 0)?);
 	// let end_of_view = end_of_view.and_time(NaiveTime::from_hms_opt(23, 59, 59)?);
@@ -156,40 +156,63 @@ pub fn Day(
 ) -> impl IntoView {
 	// log!("Create_day");
 	// Retrieves the events of a user on a day.
-	async fn get_events((name, date): (String, NaiveDate)) -> Vec<Event> {
-		let id = common::api::user_id_from_name(name).await.unwrap();
-		let events = get_day_events(id, date).await.unwrap();
-		events
+	async fn get_events((name, date): (String, NaiveDate)) -> Result<Vec<Event>, ServerFnError> {
+		let id = common::api::user_id_from_name(name).await?;
+		let events = get_day_events(id, date).await?;
+		Ok(events)
 	} //TODO: write resource for retrieving uuid from name, then a vec of Events.
 
 	let events_resource = create_resource(cx, move || ("michah".into(), date()), get_events); //TODO: change name
 
-	let (events, set_events) = create_signal(cx, Vec::<Event>::new());
+	let render = move || {
+		match events_resource.read(cx) {
+			Some(Ok(events)) => {
+				view! {cx, 
+					""
+					{events
+						.into_iter()
+						.map(|event| view!{cx, <DayEvent event/>})
+						.collect::<Vec<_>>()
+					}
+				}
+			}
+			Some(Err(e)) => {
+				view! {cx,
+					""
+					{format!("{e}")}
+				}
+			}
+			None => {
+				view!{cx, "" {()}}
+			}
+		}
+	};
 
-	let events_view = Signal::derive(cx, move || {
-		// log!("events_view!");
-		events_resource.read(cx).map(|mut ev| {
-			set_events.update(|v| {
-				v.clear();
-				v.append(&mut ev);
-			});
-		});
-	});
+	// let (events, set_events) = create_signal(cx, Vec::<Event>::new());
+
+	// let events_view = Signal::derive(cx, move || {
+	// 	// log!("events_view!");
+	// 	events_resource.read(cx).map(|mut ev| {
+	// 		set_events.update(|v| {
+	// 			v.clear();
+	// 			v.append(&mut ev);
+	// 		});
+	// 	});
+	// });
 
 	let day_view_link = move || date().format("/day/%Y-%m-%d").to_string();
 
 	view! {cx,
-			<div class="monthview-day">
-				<p class="monthview-day-datum">{move || date().day()}</p>
-				<div class="monthview-day-items-wrapper">
-					<Transition fallback=move || view! {cx, <p>"Loading..."</p>}>
-						{events_view}
-						{move || events().into_iter().map(|event| view!{cx, <DayEvent event/>}).collect::<Vec<_>>()}
-					</Transition>
-				</div>
-				<a href=day_view_link class="monthview-dayview-link reset-a">""</a>
+		<div class="monthview-day">
+			<p class="monthview-day-datum">{move || date().day()}</p>
+			<div class="monthview-day-items-wrapper">
+				<Transition fallback=move || view! {cx, <p>"Loading..."</p>}>
+					{render}
+				</Transition>
 			</div>
-		}
+			<a href=day_view_link class="monthview-dayview-link reset-a">""</a>
+		</div>
+	}
 }
 
 #[component]
