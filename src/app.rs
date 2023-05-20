@@ -18,6 +18,7 @@ cfg_if::cfg_if! {
 
 			use crate::common::api::*;
 			_ = pages::GetDayEvents::register();
+			_ = pages::GetMonthEvents::register();
 			_ = UserIdFromName::register();
 		}
 	}

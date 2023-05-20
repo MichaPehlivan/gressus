@@ -10,10 +10,10 @@ use leptos_router::*;
 // #[cfg(feature = "ssr")]
 // use crate::backend::database::{db_error::DBResultConvert, db_requests};
 
-use super::get_day_events;
+use super::{get_day_events, get_month_events};
 
-pub const WEEKS_IN_MONTH: u64 = 6;
-pub const DAYS_IN_MONTH: u64 = WEEKS_IN_MONTH * 7;
+pub const WEEKS_IN_MONTH: usize = 6;
+pub const DAYS_IN_MONTH: usize = WEEKS_IN_MONTH * 7;
 pub const WEEK_START: Weekday = Weekday::Mon;
 
 /// Returns the first and the last possible NaiveDateTime of this month's view.
@@ -42,88 +42,105 @@ pub fn MonthView(
 	#[prop(optional)]
 	ym: Option<Signal<(i32, u8)>>,
 ) -> impl IntoView {
-	let ym = Signal::derive(cx, move || {
-		Ok(match ym {
-			Some(ym) => ym(),
-			None => match use_params::<MonthViewParams>(cx)() {
-				Ok(MonthViewParams { year, month }) => (year, month),
-				Err(e) => (2017, 1), //TODO: handle error
-			},
-		})
+	let ym = match ym {
+		Some(ym) => Signal::derive(cx, move || ym()),
+		None => Signal::derive(cx, move || match use_params::<MonthViewParams>(cx)() {
+			Ok(MonthViewParams { year, month }) => (year, month),
+			Err(e) => (1, 1), //TODO: handle error
+		}),
+	};
+
+	// Prepares the events for each day in the month view.
+	async fn get_events((name, ym): (String, (i32, u8))) -> Result<Vec<Vec<Event>>, ServerFnError> {
+		let id = common::api::user_id_from_name(name).await?;
+		let events = get_month_events(id, ym).await;
+		events
+	}
+	let events_res = create_resource(cx, move || ("michah".into(), ym()), get_events);
+	// This signal reads the resource and converts it into an array of options.
+	let EMPTY: [Option<Vec<Event>>; DAYS_IN_MONTH] = [(); DAYS_IN_MONTH].map(|_| None);
+	let (month_events, set_month_events) = create_signal(cx, EMPTY.clone());
+	let month_events_update = Signal::derive(cx, move || {
+		set_month_events.set(
+			events_res
+				.with(cx, |res| {
+					log!("Loading resource!");
+					match res {
+						Ok(ref events) => {
+							let mut out: [Option<Vec<Event>>; DAYS_IN_MONTH] = EMPTY.clone();
+
+							for i in 0..out.len() {
+								out[i] = Some(events[i].clone());
+							}
+							log!("Succes!");
+							out
+						}
+						Err(ref err) => {
+							log!("{err}");
+							EMPTY.clone()
+						}
+					}
+				})
+				.unwrap_or_else(|| EMPTY.clone()),
+		);
 	});
 
-	let first_of_view = create_memo(cx, move |_| {
-		let (year, month) = ym()?;
+	let first_of_view = Signal::derive(cx, move || {
+		let (year, month) = ym();
 		get_first_of_view(year, month)
 			.ok_or(ParamsError::Params(Arc::new(ViewError::OutOfRangeError)))
+			.expect("Dates should be in the range of dates described by chrono.")
 	});
 
-	let mut weeks = Vec::with_capacity(WEEKS_IN_MONTH as usize);
+	// Builds each reactive part of the month view.
+	let mut weeks = Vec::with_capacity(WEEKS_IN_MONTH);
 	let mut days_add = 0;
-	for row in 0..WEEKS_IN_MONTH {
-		let mut days_in_week = Vec::with_capacity(7);
+	for week_i in 0..WEEKS_IN_MONTH {
+		let week_number = move || {
+			(first_of_view().date() + Days::new(days_add + 1))
+				.iso_week()
+				.week()
+		};
 
-		for day in 0..7 {
-			let current_date = Signal::derive(cx, move || {
-				first_of_view().unwrap().date() + Days::new(days_add)
-			});
-			days_in_week.push((day, current_date));
-			// days_in_week.push(view! {cx, <Day date=current_date/>});
+		// Prepares the reactive days for each week.
+		let mut days_in_week = Vec::with_capacity(7);
+		for day_i in 0..7 {
+			let date = Signal::derive(cx, move || first_of_view().date() + Days::new(days_add));
+			let events = Signal::derive(cx, move || month_events()[days_add as usize].clone());
+			let day = view! {cx,
+				<Day date events/>
+			};
+			days_in_week.push(day);
 			days_add += 1;
 		}
 
-		weeks.push((row, days_in_week))
-
-		// weeks.push(
-		// 	view! {cx, <p class="weeknumber">{current_date.iso_week().week()}</p> {days_in_week}}, //TODO: make config option to disable weeknumbers.
-		// );
+		// Combines the reactive days of this week with a week number to obtain a week row.
+		weeks.push(view! {cx,
+			<p class="weeknumber">{week_number}</p>
+			{days_in_week}
+		});
 	}
 
-	let render_weeks = move |cx, week: (u64, Vec<(i32, Signal<NaiveDate>)>)| {
-		let days = week.1;
-		let first_of_week = days[0].1;
-		let week_number = move || first_of_week().iso_week().week();
-		let (foreach, _) = create_signal(cx, days);
-		view! {cx,
-			<p class="weeknumber">{week_number}</p>
-			<For
-				each=foreach
-				key=|d| d.0
-				view=move |cx, day| {
-					let date = day.1;
-					view! {cx,
-						<Day date/>
-					}
-				}
-			/>
+	// The reactive links to the previous and next months.
+	let next_month = move || {
+		let (year, month) = ym();
+		let mut next_month = month + 1;
+		let mut next_year = year;
+		if next_month > 12 {
+			next_month = 1;
+			next_year += 1;
 		}
+		format!("/month/{next_year}/{next_month}")
 	};
-
-	let (weeks, _) = create_signal(cx, weeks);
-
-	let next_month = move || match ym() {
-		Ok((year, month)) => {
-			let mut next_month = month + 1;
-			let mut next_year = year;
-			if next_month > 12 {
-				next_month = 1;
-				next_year += 1;
-			}
-			format!("/month/{next_year}/{next_month}")
+	let prev_month = move || {
+		let (year, month) = ym();
+		let mut prev_month = month - 1;
+		let mut prev_year = year;
+		if prev_month < 1 {
+			prev_month = 12;
+			prev_year -= 1;
 		}
-		Err(_) => "/notfound".to_string(), // If the current month is not valid, the next month is not either.
-	};
-	let prev_month = move || match ym() {
-		Ok((year, month)) => {
-			let mut prev_month = month - 1;
-			let mut prev_year = year;
-			if prev_month < 1 {
-				prev_month = 12;
-				prev_year -= 1;
-			}
-			format!("/month/{prev_year}/{prev_month}")
-		}
-		Err(_) => "/notfound".to_string(), // If the current month is not valid, the previous month is not either.
+		format!("/month/{prev_year}/{prev_month}")
 	};
 
 	view! {cx,
@@ -138,11 +155,10 @@ pub fn MonthView(
 			<p>"Fri"</p>
 			<p>"Sat"</p>
 			<p>"Sun"</p>
-			<For
-				each=weeks
-				key=|week| week.0
-				view=render_weeks
-			/>
+			<Transition fallback=move || view!{cx,}>
+				{month_events_update}
+			</Transition>
+			{weeks}
 		</div>
 	}
 }
@@ -153,62 +169,25 @@ pub fn Day(
 	cx: Scope,
 	/// The date of this day view.
 	date: Signal<NaiveDate>,
+	/// The events in this day view.
+	events: Signal<Option<Vec<Event>>>,
 ) -> impl IntoView {
 	// log!("Create_day");
-	// Retrieves the events of a user on a day.
-	async fn get_events((name, date): (String, NaiveDate)) -> Result<Vec<Event>, ServerFnError> {
-		let id = common::api::user_id_from_name(name).await?;
-		let events = get_day_events(id, date).await?;
-		Ok(events)
-	} //TODO: write resource for retrieving uuid from name, then a vec of Events.
-
-	let events_resource = create_resource(cx, move || ("michah".into(), date()), get_events); //TODO: change name
-
-	let render = move || {
-		match events_resource.read(cx) {
-			Some(Ok(events)) => {
-				view! {cx, 
-					""
-					{events
-						.into_iter()
-						.map(|event| view!{cx, <DayEvent event/>})
-						.collect::<Vec<_>>()
-					}
-				}
-			}
-			Some(Err(e)) => {
-				view! {cx,
-					""
-					{format!("{e}")}
-				}
-			}
-			None => {
-				view!{cx, "" {()}}
-			}
-		}
-	};
-
-	// let (events, set_events) = create_signal(cx, Vec::<Event>::new());
-
-	// let events_view = Signal::derive(cx, move || {
-	// 	// log!("events_view!");
-	// 	events_resource.read(cx).map(|mut ev| {
-	// 		set_events.update(|v| {
-	// 			v.clear();
-	// 			v.append(&mut ev);
-	// 		});
-	// 	});
-	// });
-
 	let day_view_link = move || date().format("/day/%Y-%m-%d").to_string();
+
+	let display = move || {
+		events().map(|ev| {
+			ev.into_iter()
+				.map(|event| view! {cx, <DayEvent event/>})
+				.collect::<Vec<_>>()
+		})
+	};
 
 	view! {cx,
 		<div class="monthview-day">
 			<p class="monthview-day-datum">{move || date().day()}</p>
 			<div class="monthview-day-items-wrapper">
-				<Transition fallback=move || view! {cx, <p>"Loading..."</p>}>
-					{render}
-				</Transition>
+				{display}
 			</div>
 			<a href=day_view_link class="monthview-dayview-link reset-a">""</a>
 		</div>
