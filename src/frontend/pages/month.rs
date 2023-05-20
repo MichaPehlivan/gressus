@@ -50,40 +50,31 @@ pub fn MonthView(
 		}),
 	};
 
-	// Prepares the events for each day in the month view.
-	async fn get_events((name, ym): (String, (i32, u8))) -> Result<Vec<Vec<Event>>, ServerFnError> {
-		let id = common::api::user_id_from_name(name).await?;
-		let events = get_month_events(id, ym).await;
-		events
+	fn generate_empty() -> Vec<Option<Vec<Event>>> {
+		(0..DAYS_IN_MONTH).into_iter().map(|_| None).collect::<_>()
 	}
-	let events_res = create_resource(cx, move || ("michah".into(), ym()), get_events);
-	// This signal reads the resource and converts it into an array of options.
-	let EMPTY: [Option<Vec<Event>>; DAYS_IN_MONTH] = [(); DAYS_IN_MONTH].map(|_| None);
-	let (month_events, set_month_events) = create_signal(cx, EMPTY.clone());
-	let month_events_update = Signal::derive(cx, move || {
-		set_month_events.set(
-			events_res
-				.with(cx, |res| {
-					log!("Loading resource!");
-					match res {
-						Ok(ref events) => {
-							let mut out: [Option<Vec<Event>>; DAYS_IN_MONTH] = EMPTY.clone();
 
-							for i in 0..out.len() {
-								out[i] = Some(events[i].clone());
-							}
-							log!("Succes!");
-							out
-						}
-						Err(ref err) => {
-							log!("{err}");
-							EMPTY.clone()
-						}
-					}
-				})
-				.unwrap_or_else(|| EMPTY.clone()),
-		);
-	});
+	// This function reads the resource and converts it into an array of options. The size of the array is precisely `DAYS_IN_MONTH`.
+	async fn get_events((name, ym): (String, (i32, u8))) -> Vec<Option<Vec<Event>>> {
+		async fn get_events_res(
+			(name, ym): (String, (i32, u8)),
+		) -> Result<Vec<Vec<Event>>, ServerFnError> {
+			let id = common::api::user_id_from_name(name).await?;
+			let events = get_month_events(id, ym).await;
+			events
+		}
+
+		match get_events_res((name, ym)).await {
+			Ok(ref events) => {
+				events.clone().into_iter().map(|ev| Some(ev)).collect::<Vec<_>>()
+			}
+			Err(ref err) => {
+				log!("{err}");
+				generate_empty()
+			}
+		}
+	}
+	let events = create_resource(cx, move || ("michah".into(), ym()), get_events); // TODO: authentication
 
 	let first_of_view = Signal::derive(cx, move || {
 		let (year, month) = ym();
@@ -106,9 +97,9 @@ pub fn MonthView(
 		let mut days_in_week = Vec::with_capacity(7);
 		for day_i in 0..7 {
 			let date = Signal::derive(cx, move || first_of_view().date() + Days::new(days_add));
-			let events = Signal::derive(cx, move || month_events()[days_add as usize].clone());
+			let index = days_add as usize;
 			let day = view! {cx,
-				<Day date events/>
+				<Day date events index/>
 			};
 			days_in_week.push(day);
 			days_add += 1;
@@ -155,9 +146,6 @@ pub fn MonthView(
 			<p>"Fri"</p>
 			<p>"Sat"</p>
 			<p>"Sun"</p>
-			<Transition fallback=move || view!{cx,}>
-				{month_events_update}
-			</Transition>
 			{weeks}
 		</div>
 	}
@@ -169,14 +157,19 @@ pub fn Day(
 	cx: Scope,
 	/// The date of this day view.
 	date: Signal<NaiveDate>,
-	/// The events in this day view.
-	events: Signal<Option<Vec<Event>>>,
+	/// The events in this day view. Length should be [`DAYS_IN_MONTH`].
+	events: Resource<(String, (i32, u8)), Vec<Option<Vec<Event>>>>,
+	/// The index into the events resource that this event should use.
+	index: usize,
 ) -> impl IntoView {
 	// log!("Create_day");
 	let day_view_link = move || date().format("/day/%Y-%m-%d").to_string();
 
 	let display = move || {
-		events().map(|ev| {
+		let events = events.with(cx, |ev| {
+			ev[index].clone()
+		}).flatten();
+		events.map(|ev| {
 			ev.into_iter()
 				.map(|event| view! {cx, <DayEvent event/>})
 				.collect::<Vec<_>>()
@@ -187,7 +180,9 @@ pub fn Day(
 		<div class="monthview-day">
 			<p class="monthview-day-datum">{move || date().day()}</p>
 			<div class="monthview-day-items-wrapper">
+			<Transition fallback=move || view!{cx, <p class="loading">"Loading..."</p>}>
 				{display}
+			</Transition>
 			</div>
 			<a href=day_view_link class="monthview-dayview-link reset-a">""</a>
 		</div>
