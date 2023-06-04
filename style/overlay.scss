@@ -10,7 +10,7 @@
 .navbar {
 	display: flex;
 	flex-direction: row;
-	justify-content: left;
+	justify-content: space-between;
 	background-color: #666666;
 	height: 50px;
 	width: 100%;
@@ -29,7 +29,6 @@
 	display: flex;
 	flex-direction:row;
 	justify-content: end;
-	margin-left: auto;
 	height: 100%;
 	& > a {
 		height: 100%;
