@@ -21,10 +21,8 @@ pub fn get_first_of_view(year: i32, month: u8) -> Option<NaiveDateTime> {
 	let first_of_month = NaiveDate::from_ymd_opt(year, month as u32, 1)?;
 	// View in Dates
 	let start_of_view = first_of_month.week(WEEK_START).first_day();
-	// let end_of_view = start_of_view + Days::new(DAYS_IN_MONTH);
 	// View in DateTimes
 	let start_of_view = start_of_view.and_time(NaiveTime::from_hms_opt(0, 0, 0)?);
-	// let end_of_view = end_of_view.and_time(NaiveTime::from_hms_opt(23, 59, 59)?);
 	Some(start_of_view)
 }
 
@@ -33,6 +31,8 @@ struct MonthViewParams {
 	year: i32,
 	month: u8,
 }
+
+//TODO: Something is lagging monthview after the user has navigated to a different month many times.
 
 /// Renders a specific month's view.
 #[component]
@@ -135,8 +135,10 @@ pub fn MonthView(
 	};
 
 	view! {cx,
-		<A href=next_month>"Next month"</A>
-		<A href=prev_month>"Previous month"</A>
+		<div class="month-nav-wrapper">
+			<A href=prev_month class="prev-month">"<<<"</A>
+			<A href=next_month class="next-month">">>>"</A>
+		</div>
 		<div class="monthview">
 			<p>"Week"</p>
 			<p>"Mon"</p>
@@ -169,6 +171,7 @@ pub fn Day(
 		let events = events.with(cx, |ev| {
 			ev[index].clone()
 		}).flatten();
+
 		events.map(|ev| {
 			ev.into_iter()
 				.map(|event| view! {cx, <DayEvent event/>})
@@ -176,13 +179,17 @@ pub fn Day(
 		})
 	};
 
+	// log!("Create(day)");
+
 	view! {cx,
-		<div class="monthview-day">
-			<p class="monthview-day-datum">{move || date().day()}</p>
-			<div class="monthview-day-items-wrapper">
-			<Transition fallback=move || view!{cx, <p class="loading">"Loading..."</p>}>
-				{display}
-			</Transition>
+		<div class="monthview-day-wrapper">
+			<div class="monthview-day">
+				<p class="monthview-day-datum">{move || date().day()}</p>
+				// <div class="monthview-day-items-wrapper">
+				<Transition fallback=move || view!{cx, <p class="loading">"Loading..."</p>}>
+					{display}
+				</Transition>
+				// </div>
 			</div>
 			<a href=day_view_link class="monthview-dayview-link reset-a">""</a>
 		</div>
@@ -191,6 +198,9 @@ pub fn Day(
 
 #[component]
 pub fn DayEvent(cx: Scope, event: Event) -> impl IntoView {
+
+	// log!("Create(event)");
+
 	let title = event.name;
 	view! {cx,
 		<p class="monthview-day-event" style=format!("background-color: #4a9cb3")>{title}</p>
