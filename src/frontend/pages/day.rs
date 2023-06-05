@@ -22,59 +22,51 @@ const ONE_DAY: Days = Days::new(1);
 
 #[component]
 pub fn DayView(cx: Scope, #[prop(optional)] date: Option<Signal<NaiveDate>>) -> impl IntoView {
-	let date: Signal<Result<NaiveDate, ParamsError>> = Signal::derive(cx, move || {
-		Ok(match date {
-			Some(d) => d(),
-			None => match use_params::<DayViewParams>(cx)() {
-				Ok(p) => p.date.0,
-				Err(e) => NaiveDate::default(), //TODO: handle error
-			},
-		})
-	});
+	let date = match date {
+		Some(d) => d,
+		None => Signal::derive(cx, move || match use_params::<DayViewParams>(cx)() {
+			Ok(p) => p.date.0,
+			Err(e) => NaiveDate::default(),
+		}),
+	};
 
-	// Accepts an Option<NaiveDate> as we have to bubble a possible parse error up.
-	async fn get_events((name, date): (String, Option<NaiveDate>)) -> Option<Vec<Event>> {
-		let id = api::user_id_from_name(name).await.unwrap();
-		let events = get_day_events(id, date?).await.unwrap();
-		Some(events)
+	async fn get_events((name, date): (String, NaiveDate)) -> Result<Vec<Event>, ServerFnError> {
+		let id = api::user_id_from_name(name).await?;
+		let events = get_day_events(id, date).await?;
+		Ok(events)
 	}
 
-	let events = create_resource(cx, move || ("michah".into(), date().ok()), get_events); //TODO: change name
+	let events = create_resource(cx, move || ("michah".into(), date()), get_events); //TODO: change name
 
 	let for_view = move |cx, event: Event| {
+		log!("for_view");
 		view! {
 			cx,
-			<DayEvent event date={Signal::derive(cx, move || date().unwrap())}/> // Unwrap is allowed here, as `for_view` will not be called when there is an error.
+			<DayEvent event date={Signal::derive(cx, move || date())}/> // Unwrap is allowed here, as `for_view` will not be called when there is an error.
 		}
 	};
 
 	let events_view = move || {
-		events.read(cx).map(|opt| match opt {
-			Some(events) => view! {cx,
-				<div class="dayview-item-container" style=move || format!("grid-template-rows: repeat({NUM_ROWS}, 1fr);")>
-					<For
-						each=move || {events.clone()}
-						key=|event| event.uuid.clone()
-						view=for_view
-					/>
-				</div>
-			},
-			None => view! {cx,
-				<div>
-					<Redirect path="/notfound"/>
-				</div>
-			},
+		log!("events_view, pending_resources: {:?}", cx.pending_resources().len());
+		events.with(cx, move |ev_result| {
+			let ev_result = ev_result.clone();
+			match ev_result {
+				Ok(events) => view! {cx,
+					<div class="dayview-item-container" style=move || format!("grid-template-rows: repeat({NUM_ROWS}, 1fr);")>
+						{events.into_iter().map(move |event| for_view(cx, event)).collect::<Vec<_>>()}
+					</div>
+				},
+				Err(_) => view! {cx,
+					<div>
+						<Redirect path="/notfound"/>
+					</div>
+				},
+			}
 		})
 	};
 
-	let next_date = move || match date() {
-		Ok(d) => (d + ONE_DAY).format("/day/%Y-%m-%d").to_string(),
-		Err(_) => "/notfound".to_string(), // If the current day is not valid, the next day is not either.
-	};
-	let prev_date = move || match date() {
-		Ok(d) => (d - ONE_DAY).format("/day/%Y-%m-%d").to_string(),
-		Err(_) => "/notfound".to_string(), // If the current day is not valid, the previous day is not either.
-	};
+	let next_date = move || (date() + ONE_DAY).format("/day/%Y-%m-%d").to_string();
+	let prev_date = move || (date() - ONE_DAY).format("/day/%Y-%m-%d").to_string();
 
 	view! {cx,
 		<div class="dayview">
@@ -91,13 +83,13 @@ pub fn DayView(cx: Scope, #[prop(optional)] date: Option<Signal<NaiveDate>>) -> 
 
 #[component]
 pub fn DayEvent(cx: Scope, event: Event, date: Signal<NaiveDate>) -> impl IntoView {
-	dbg!(&event);
 	let Timespan {
 		start: Datetime(start),
 		end: Datetime(end),
 	} = event.timespan;
 
-	let row_style = move || {
+	let row_style = Signal::derive(cx, move || { //TODO: This signal is not properly dropped after navigating to a new day, which causes the signals to accumulate and lag the page.
+		log!("row_style");
 		let (start_of_view, end_of_view) = get_day_view_range(date()).unwrap();
 		let start_of_view = start_of_view.and_local_timezone(Utc).unwrap();
 		let end_of_view = end_of_view.and_local_timezone(Utc).unwrap();
@@ -108,11 +100,15 @@ pub fn DayEvent(cx: Scope, event: Event, date: Signal<NaiveDate>) -> impl IntoVi
 		let start_secs = (start - start_of_view).num_seconds() as i64;
 		let end_secs = (end - start_of_view).num_seconds() as i64;
 
+		if end_secs < start_secs {
+			return "display: none".to_string();
+		}
+
 		let start_row = (start_secs / SECONDS_PER_ROW).max(1);
 		let end_row = (end_secs / SECONDS_PER_ROW).min(NUM_ROWS);
 
 		format!("grid-row-start: {start_row}; grid-row-end: {end_row};")
-	};
+	});
 
 	let title = event.name;
 

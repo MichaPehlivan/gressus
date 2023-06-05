@@ -1,11 +1,13 @@
 use std::sync::Arc;
 
+use crate::common::api::user_id_from_name;
 use crate::{common, frontend::pages::ViewError};
 // use crate::backend::database::db_requests;
-use crate::common::model::*;
-use chrono::{prelude::*, Days};
+use crate::common::{api, model::*};
+use chrono::{prelude::*, Days, Duration};
 use leptos::*;
 use leptos_router::*;
+use surrealdb::sql::Uuid;
 
 // #[cfg(feature = "ssr")]
 // use crate::backend::database::{db_error::DBResultConvert, db_requests};
@@ -43,7 +45,7 @@ pub fn MonthView(
 	ym: Option<Signal<(i32, u8)>>,
 ) -> impl IntoView {
 	let ym = match ym {
-		Some(ym) => Signal::derive(cx, move || ym()),
+		Some(ym) => ym,
 		None => Signal::derive(cx, move || match use_params::<MonthViewParams>(cx)() {
 			Ok(MonthViewParams { year, month }) => (year, month),
 			Err(e) => (1, 1), //TODO: handle error
@@ -54,7 +56,7 @@ pub fn MonthView(
 		(0..DAYS_IN_MONTH).into_iter().map(|_| None).collect::<_>()
 	}
 
-	// This function reads the resource and converts it into an array of options. The size of the array is precisely `DAYS_IN_MONTH`.
+	/// This function reads the resource and converts it into an array of options. The size of the array is precisely [`DAYS_IN_MONTH`].
 	async fn get_events((name, ym): (String, (i32, u8))) -> Vec<Option<Vec<Event>>> {
 		async fn get_events_res(
 			(name, ym): (String, (i32, u8)),
@@ -65,9 +67,11 @@ pub fn MonthView(
 		}
 
 		match get_events_res((name, ym)).await {
-			Ok(ref events) => {
-				events.clone().into_iter().map(|ev| Some(ev)).collect::<Vec<_>>()
-			}
+			Ok(ref events) => events
+				.clone()
+				.into_iter()
+				.map(|ev| Some(ev))
+				.collect::<Vec<_>>(),
 			Err(ref err) => {
 				log!("{err}");
 				generate_empty()
@@ -164,13 +168,10 @@ pub fn Day(
 	/// The index into the events resource that this event should use.
 	index: usize,
 ) -> impl IntoView {
-	// log!("Create_day");
 	let day_view_link = move || date().format("/day/%Y-%m-%d").to_string();
 
 	let display = move || {
-		let events = events.with(cx, |ev| {
-			ev[index].clone()
-		}).flatten();
+		let events = events.with(cx, |ev| ev[index].clone()).flatten();
 
 		events.map(|ev| {
 			ev.into_iter()
@@ -179,30 +180,48 @@ pub fn Day(
 		})
 	};
 
-	// log!("Create(day)");
-
 	view! {cx,
 		<div class="monthview-day-wrapper">
 			<div class="monthview-day">
 				<p class="monthview-day-datum">{move || date().day()}</p>
-				// <div class="monthview-day-items-wrapper">
 				<Transition fallback=move || view!{cx, <p class="loading">"Loading..."</p>}>
 					{display}
 				</Transition>
-				// </div>
 			</div>
 			<a href=day_view_link class="monthview-dayview-link reset-a">""</a>
+			<DayEditOptions date/>
 		</div>
 	}
 }
 
 #[component]
 pub fn DayEvent(cx: Scope, event: Event) -> impl IntoView {
-
-	// log!("Create(event)");
-
 	let title = event.name;
 	view! {cx,
 		<p class="monthview-day-event" style=format!("background-color: #4a9cb3")>{title}</p>
+	}
+}
+
+#[component]
+pub fn DayEditOptions(cx: Scope, date: Signal<NaiveDate>) -> impl IntoView {
+	let add_event_action = create_action(cx, move |_: &()| async move {
+		let name = "An event".to_string();
+		let description =
+			"with the sole purpose to be temporary, and hopefully not land in production.".to_string();
+		let start = Utc.from_local_datetime(&date().and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())).unwrap();
+		let end = start + Duration::seconds(24 * 60 * 60 - 1);
+		let category = Uuid::new();
+		let user = user_id_from_name("michah".into()).await.unwrap(); //TODO: change username.
+		api::add_event(name, description, start, end, category, user).await.unwrap();
+	});
+
+	let on_click = move |_| add_event_action.dispatch(());
+
+	view! {cx,
+		<div class="monthview-day-options">
+			<button class="add-event" on:click=on_click>
+				"Add event"
+			</button>
+		</div>
 	}
 }

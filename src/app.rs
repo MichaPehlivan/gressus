@@ -20,6 +20,7 @@ cfg_if::cfg_if! {
 			_ = pages::GetDayEvents::register();
 			_ = pages::GetMonthEvents::register();
 			_ = UserIdFromName::register();
+			_ = AddEvent::register();
 		}
 	}
 }
