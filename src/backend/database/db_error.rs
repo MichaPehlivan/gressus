@@ -21,14 +21,14 @@ pub enum DBerror {
 }
 
 pub trait DBResultConvert<T> {
-	fn to_server_error(self: Self) -> Result<T, ServerFnError>
+	fn to_server_error(self) -> Result<T, ServerFnError>
 	where
 		Self: Sized;
 }
 
 impl<T> DBResultConvert<T> for Result<T, DBerror> {
 	#[inline(always)]
-	fn to_server_error(self: Self) -> Result<T, ServerFnError>
+	fn to_server_error(self) -> Result<T, ServerFnError>
 	where
 		Self: Sized,
 	{
@@ -36,8 +36,8 @@ impl<T> DBResultConvert<T> for Result<T, DBerror> {
 	}
 }
 
-impl Into<ServerFnError> for DBerror {
-	fn into(self) -> ServerFnError {
-		ServerFnError::ServerError(self.to_string())
+impl From<DBerror> for ServerFnError {
+	fn from(val: DBerror) -> Self {
+		ServerFnError::ServerError(val.to_string())
 	}
 }

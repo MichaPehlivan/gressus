@@ -19,7 +19,7 @@ pub enum ViewError {
 
 #[cfg(feature = "ssr")]
 impl<T> DBResultConvert<T> for Result<T, ViewError> {
-	fn to_server_error(self: Self) -> Result<T, ServerFnError>
+	fn to_server_error(self) -> Result<T, ServerFnError>
 	where
 		Self: Sized,
 	{
@@ -27,9 +27,9 @@ impl<T> DBResultConvert<T> for Result<T, ViewError> {
 	}
 }
 
-impl Into<ServerFnError> for ViewError {
-	fn into(self) -> ServerFnError {
-		ServerFnError::ServerError(self.to_string())
+impl From<ViewError> for ServerFnError {
+	fn from(val: ViewError) -> Self {
+		ServerFnError::ServerError(val.to_string())
 	}
 }
 
@@ -80,7 +80,7 @@ pub async fn get_month_events(
 		.to_server_error()?;
 
 	let start_of_view =
-		month::get_first_of_view(year, month).ok_or(ViewError::OutOfRangeError.into())?;
+		month::get_first_of_view(year, month).ok_or::<ServerFnError>(ViewError::OutOfRangeError.into())?;
 	let end_of_view = start_of_view + Days::new(month::DAYS_IN_MONTH as u64);
 
 	// Convert the range into timezone-aware DateTimes

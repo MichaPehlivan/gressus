@@ -12,7 +12,7 @@ use surrealdb::sql::Uuid;
 // #[cfg(feature = "ssr")]
 // use crate::backend::database::{db_error::DBResultConvert, db_requests};
 
-use super::{get_day_events, get_month_events};
+use super::get_month_events;
 
 pub const WEEKS_IN_MONTH: usize = 6;
 pub const DAYS_IN_MONTH: usize = WEEKS_IN_MONTH * 7;
@@ -48,12 +48,12 @@ pub fn MonthView(
 		Some(ym) => ym,
 		None => Signal::derive(cx, move || match use_params::<MonthViewParams>(cx)() {
 			Ok(MonthViewParams { year, month }) => (year, month),
-			Err(e) => (1, 1), //TODO: handle error
+			Err(_) => (1, 1), //TODO: handle error
 		}),
 	};
 
 	fn generate_empty() -> Vec<Option<Vec<Event>>> {
-		(0..DAYS_IN_MONTH).into_iter().map(|_| None).collect::<_>()
+		(0..DAYS_IN_MONTH).map(|_| None).collect::<_>()
 	}
 
 	/// This function reads the resource and converts it into an array of options. The size of the array is precisely [`DAYS_IN_MONTH`].
@@ -62,8 +62,7 @@ pub fn MonthView(
 			(name, ym): (String, (i32, u8)),
 		) -> Result<Vec<Vec<Event>>, ServerFnError> {
 			let id = common::api::user_id_from_name(name).await?;
-			let events = get_month_events(id, ym).await;
-			events
+			get_month_events(id, ym).await
 		}
 
 		match get_events_res((name, ym)).await {
@@ -90,7 +89,7 @@ pub fn MonthView(
 	// Builds each reactive part of the month view.
 	let mut weeks = Vec::with_capacity(WEEKS_IN_MONTH);
 	let mut days_add = 0;
-	for week_i in 0..WEEKS_IN_MONTH {
+	for _week_i in 0..WEEKS_IN_MONTH {
 		let week_number = move || {
 			(first_of_view().date() + Days::new(days_add + 1))
 				.iso_week()
@@ -99,7 +98,7 @@ pub fn MonthView(
 
 		// Prepares the reactive days for each week.
 		let mut days_in_week = Vec::with_capacity(7);
-		for day_i in 0..7 {
+		for _day_i in 0..7 {
 			let date = Signal::derive(cx, move || first_of_view().date() + Days::new(days_add));
 			let index = days_add as usize;
 			let day = view! {cx,

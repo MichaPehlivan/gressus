@@ -26,7 +26,7 @@ pub fn DayView(cx: Scope, #[prop(optional)] date: Option<Signal<NaiveDate>>) -> 
 		Some(d) => d,
 		None => Signal::derive(cx, move || match use_params::<DayViewParams>(cx)() {
 			Ok(p) => p.date.0,
-			Err(e) => NaiveDate::default(),
+			Err(_) => NaiveDate::default(),
 		}),
 	};
 
@@ -42,7 +42,7 @@ pub fn DayView(cx: Scope, #[prop(optional)] date: Option<Signal<NaiveDate>>) -> 
 		log!("for_view");
 		view! {
 			cx,
-			<DayEvent event date={Signal::derive(cx, move || date())}/> // Unwrap is allowed here, as `for_view` will not be called when there is an error.
+			<DayEvent event date/> // Unwrap is allowed here, as `for_view` will not be called when there is an error.
 		}
 	};
 
@@ -97,8 +97,8 @@ pub fn DayEvent(cx: Scope, event: Event, date: Signal<NaiveDate>) -> impl IntoVi
 		let start = start_of_view.max(start);
 		let end = end_of_view.min(end);
 
-		let start_secs = (start - start_of_view).num_seconds() as i64;
-		let end_secs = (end - start_of_view).num_seconds() as i64;
+		let start_secs = (start - start_of_view).num_seconds();
+		let end_secs = (end - start_of_view).num_seconds();
 
 		if end_secs < start_secs {
 			return "display: none".to_string();

@@ -14,9 +14,8 @@ pub async fn add_user(
 	username: &str,
 	password: &Vec<u8>,
 ) -> Result<User, DBerror> {
-	match user_id_from_name(db, username).await {
-		Ok(_) => return Err(DBerror::UserAlreadyExists(username.to_string())),
-		Err(_) => (),
+	if user_id_from_name(db, username).await.is_ok() {
+		return Err(DBerror::UserAlreadyExists(username.to_string()));
 	}
 	let time = Utc::now();
 	let id = Uuid::new();
