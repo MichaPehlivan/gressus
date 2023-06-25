@@ -181,11 +181,13 @@ pub fn Day(
 
 	view! {cx,
 		<div class="monthview-day-wrapper">
-			<div class="monthview-day">
-				<p class="monthview-day-datum">{move || date().day()}</p>
-				<Transition fallback=move || view!{cx, <p class="loading">"Loading..."</p>}>
-					{display}
-				</Transition>
+			<div class="monthview-day-items-wrapper">
+				<div class="monthview-day">
+					<p class="monthview-day-datum">{move || date().day()}</p>
+					<Transition fallback=move || view!{cx, <p class="loading">"Loading..."</p>}>
+						{display}
+					</Transition>
+				</div>
 			</div>
 			<a href=day_view_link class="monthview-dayview-link reset-a">""</a>
 			<DayEditOptions date/>
