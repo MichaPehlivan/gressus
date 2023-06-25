@@ -41,7 +41,7 @@ pub fn get_day_view_range(date: NaiveDate) -> Option<(NaiveDateTime, NaiveDateTi
 }
 
 #[cfg(feature = "ssr")]
-use crate::app::DB;
+use crate::backend::database::DB;
 #[cfg(feature = "ssr")]
 use crate::backend::database::{db_error::DBResultConvert, db_requests};
 

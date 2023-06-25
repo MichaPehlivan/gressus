@@ -9,9 +9,6 @@ use pages::month::*;
 
 cfg_if::cfg_if! {
 	if #[cfg(feature = "ssr")] {
-		use surrealdb::Surreal;
-		/// The surrealdb singleton
-		pub static DB: Surreal<surrealdb::engine::remote::ws::Client> = Surreal::init();
 
 		pub fn register_server_fns() {
 			// _ = pages::month::GetMonthEvents::register();

@@ -1,7 +1,7 @@
 cfg_if::cfg_if! {
 	if #[cfg(feature = "ssr")] {
 		use crate::backend::database::{db_error::DBResultConvert, db_requests};
-		use crate::app::DB;
+		use crate::backend::database::DB;
 	}
 }
 

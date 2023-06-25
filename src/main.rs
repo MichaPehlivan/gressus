@@ -19,23 +19,15 @@ use surrealdb::sql::{Datetime, Uuid};
 async fn main() -> std::io::Result<()> {
 	// Connect to the database server
 
-	use gressus::app::DB;
+	use gressus::backend::database::{DB, init};
 	use gressus::backend::database::db_requests::{
 		add_category, change_password, event_edit_desc, event_edit_name, get_categories,
 		get_category, task_edit_desc, task_edit_name, task_set_completion,
 	};
 	let db = &DB;
-	db.connect::<Ws>("127.0.0.1:8000").await.unwrap();
 
-	// Signin to database
-	db.signin(Root {
-		username: &env::var("DATABASE_USER").unwrap(),
-		password: &env::var("DATABASE_PASS").unwrap(),
-	})
-	.await
-	.unwrap();
+	init().await.unwrap();
 
-	// Select a specific namespace / database
 	db.use_ns("main").use_db("main").await.unwrap();
 
 	add_user(&db, "micha", &"pass".as_bytes().to_vec())
